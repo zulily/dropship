@@ -8,5 +8,5 @@ die () {
 
 (cd `dirname "$0"`;
  echo "Using dropship to run $1 in Jetty";
- java $OPTS -Drepo.local.path=/tmp/.m2 -jar ../target/dropship-*.jar org.mortbay.jetty:jetty-runner org.mortbay.jetty.runner.Runner $1;
+ java $OPTS -Dverbose -jar ../target/dropship-*.jar org.mortbay.jetty:jetty-runner org.mortbay.jetty.runner.Runner $1;
  )
