@@ -1,0 +1,16 @@
+.m2
+
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Maven things
+target
+dependency-reduced-pom.xml
+
+# IntelliJ things
+*.iml
+.idea
