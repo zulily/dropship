@@ -1,60 +1,46 @@
 Dropship
 ===
 
-Bootstrap Your Application
+Deploy, instantiate, and run your Java applications from any maven repository.
+
+Getting Started
 ----
 
 Stop pushing artifacts into production, use Dropship to pull them down from a maven repository and run your code!
 Dropship automatically creates a classpath containing all of your project's dependencies and will run the `public static
 void main(String[])` method of a class you specify!
 
-    java -Ddropship.properties=./dropship.properties -jar dropship-1.0-SNAPSHOT.jar mygroup:myartifact[:myversion] mygroup.myartifact.Main arg1 arg2...
+  java -jar dropship.jar mygroup:myartifact[:myversion] mygroup.myartifact.Main args...
 
 If you omit the version, Dropship will automatically run the latest version of your artifact.
 
 If you need to manage versions of multiple artifacts, then use `dropship.properties` to map them.
 
-    #dropship.properties
-    repo.remote.url = http://some-other-repo/
-    repo.local.path = /tmp
+  #dropship.properties
+  repo.remote.url = http://some-other-repo/
+  repo.local.path = /tmp
 
-    dropship.additional.paths = /tmp/resources
+  dropship.additional.paths = /tmp/resources
 
-    # You can leave older entries, they will be ignored and you can use this as a deploy log
-    # 2012-12-23
-    mygroup.myartifact = 1.0
+  # You can leave older entries, they will be ignored and you can use this as a deploy log
+  # 2012-12-23
+  mygroup.myartifact = 1.0
 
-    # 2012-12-24
-    mygroup.myartifact = 1.1
+  # 2012-12-24
+  mygroup.myartifact = 1.1
 
-Load Any Class In The (Mavenized) World
+
+License
 ---
 
-Given a [Maven][1] GAV coordinate, Dropship will resolve and download all dependencies from local and remote maven repositories.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-This library utilizes [Eclipse Aether][2], the library used by Maven to deal with repositories. Aether does all of the heavy lifting, this library aims to be a lightweight shim on top of it to help reduce the friction for a majority of potential uses.
+   http://www.apache.org/licenses/LICENSE-2.0
 
-[1]: http://maven.apache.org/ "Apache Maven"
-[2]: http://eclipse.org/aether "Eclipse Aether Product Page"
-
-### Getting Started (Maven)
-
-Until this is put into a maven repo, download source and build a `.jar` with Maven: `mvn clean install`
-
-Add the following to your `pom.xml`:
-
-    <dependency>
-        <groupId>com.zulily.dropship</groupId>
-        <artifactId>dropship</artifactId>
-        <version>1.0-SNAPSHOT</version>
-    </dependency>
-
-You Can Create a ClassLoader:
-
-    ClassLoader classLoader = MavenClassloader.forGAV("junit:junit:4.8.1");
-
-You're done! Assuming you wanted the classloader for a reason, such as loading a class, you just use normal reflection:
-
-    Class<?> junitAssertClass = classLoader.loadClass("org.junit.Assert");
-
-
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
