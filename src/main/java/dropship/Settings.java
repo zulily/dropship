@@ -29,7 +29,6 @@ class Settings {
   private static final CharMatcher ALIAS_DELIMITER = CharMatcher.is('/');
   private static final String DEFAULT_CONFIG_FILE_NAME = "dropship.properties";
   private static final Splitter CSV = Splitter.on(',').trimResults().omitEmptyStrings();
-  private static final int DEFAULT_CLASSLOADER_TIMEOUT_SEC = 300;
 
   static final Joiner GAV_JOINER = Joiner.on(':');
   static final Splitter GAV_SPLITTER = Splitter.on(GAV_DELIMITER).trimResults().omitEmptyStrings();
@@ -55,15 +54,6 @@ class Settings {
 
   String dropshipVersion() {
     return loadProperty("dropship.xArtifactVersion", "0.0");
-  }
-
-  int classloaderTimeoutSeconds() {
-    Optional<String> timeoutString = loadProperty("dropship.classloader-timeout-sec");
-    if (timeoutString.isPresent()) {
-      return Integer.parseInt(timeoutString.get());
-    } else {
-      return DEFAULT_CLASSLOADER_TIMEOUT_SEC;
-    }
   }
 
   List<String> additionalClasspathPaths() {

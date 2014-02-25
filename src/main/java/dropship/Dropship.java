@@ -1,8 +1,8 @@
 package dropship;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
-import dagger.Lazy;
 import dagger.Module;
 import dagger.ObjectGraph;
 import dagger.Provides;
@@ -15,8 +15,6 @@ import java.lang.reflect.Method;
 import java.net.URLClassLoader;
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -71,6 +69,18 @@ public final class Dropship {
       return ImmutableList.of(gc, cl, disk, mem, thread, uptime);
     }
 
+    @Provides
+    MavenClassLoader.ClassLoaderBuilder provideClassloaderBuilder(Settings settings, Logger logger) {
+      Optional<String> override = settings.mavenRepoUrl();
+      if (override.isPresent()) {
+        logger.info("Will load artifacts from %s", override);
+        return MavenClassLoader.using(settings, logger, override.get());
+      } else {
+        logger.info("Loading artifacts from maven central repo");
+        return MavenClassLoader.usingCentralRepo(settings, logger);
+      }
+    }
+
   }
 
   public static void main(String[] args) throws Exception {
@@ -81,13 +91,13 @@ public final class Dropship {
   private final Settings settings;
   private final Logger logger;
   private final Snitch snitch;
-  private final Lazy<ClassLoaderCreatorTask> clCreator;
+  private final ClassLoaderService classloaderService;
 
   @Inject
-  Dropship(CommandLineArgs args, Settings settings, Lazy<ClassLoaderCreatorTask> clCreator, Logger logger, Snitch snitch) {
+  Dropship(CommandLineArgs args, Settings settings, ClassLoaderService classloaderService, Logger logger, Snitch snitch) {
     this.args = checkNotNull(args, "args");
     this.settings = checkNotNull(settings, "settings");
-    this.clCreator = checkNotNull(clCreator, "class loader creator");
+    this.classloaderService = checkNotNull(classloaderService, "class loader service");
     this.logger = checkNotNull(logger, "logger");
     this.snitch = checkNotNull(snitch, "snitch");
   }
@@ -95,7 +105,7 @@ public final class Dropship {
   private void run() throws Exception {
     logger.info("Starting Dropship v%s", settings.dropshipVersion());
 
-    URLClassLoader loader = createClassLoader();
+    URLClassLoader loader = classloaderService.getClassLoader();
 
     if (loader == null) {
       logger.warn("Could not create class loader; shutting down");
@@ -114,27 +124,12 @@ public final class Dropship {
 
     Iterable<String> mainArgs = args.commandLineArguments();
 
-    snitch.start();
-
     logger.info("Invoking main method of %s", mainClass.getName());
+
+    snitch.start();
 
     mainMethod.invoke(null, (Object) Iterables.toArray(mainArgs, String.class));
 
     logger.info("Done");
-  }
-
-  private URLClassLoader createClassLoader() {
-    try {
-      ClassLoaderCreatorTask creator = clCreator.get();
-      creator.startAsync();
-      creator.awaitTerminated(settings.classloaderTimeoutSeconds(), TimeUnit.SECONDS);
-      return creator.getClassLoader();
-    } catch (NumberFormatException e) {
-      logger.warn(e, "Invalid classloader timeout value");
-      return null;
-    } catch (TimeoutException e) {
-      logger.warn("Timed out while waiting for class loader to be created");
-      return null;
-    }
   }
 }

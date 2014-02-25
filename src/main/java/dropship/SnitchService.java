@@ -9,7 +9,6 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import dagger.Lazy;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -248,11 +247,11 @@ abstract class SnitchService extends AbstractScheduledService {
   static final class ClassLoadingSnitch extends SnitchService {
 
     private final StatsdStatsLogger logger;
-    private final Lazy<ClassLoaderCreatorTask> clCreator;
+    private final ClassLoaderService clCreator;
     private final ClassLoadingMXBean mxBean;
 
     @Inject
-    public ClassLoadingSnitch(StatsdStatsLogger logger, CommandLineArgs args, Lazy<ClassLoaderCreatorTask> clCreator) {
+    public ClassLoadingSnitch(StatsdStatsLogger logger, CommandLineArgs args, ClassLoaderService clCreator) {
       super(args);
 
       this.logger = checkNotNull(logger);
@@ -262,13 +261,10 @@ abstract class SnitchService extends AbstractScheduledService {
 
     @Override
     public void runOneIteration() {
-      ClassLoaderCreatorTask task = clCreator.get();
-      task.awaitRunning();
-
       int loaded = mxBean.getLoadedClassCount();
       long totalLoaded = mxBean.getTotalLoadedClassCount();
       long unloaded = mxBean.getUnloadedClassCount();
-      int urls = task.getClassLoader().getURLs().length;
+      int urls = clCreator.getClassLoader().getURLs().length;
 
       logger.increment(key("classes-loaded"), loaded);
       logger.increment(key("classes-loaded-total"), totalLoaded);
