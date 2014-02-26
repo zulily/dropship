@@ -129,7 +129,5 @@ public final class Dropship {
     snitch.start();
 
     mainMethod.invoke(null, (Object) Iterables.toArray(mainArgs, String.class));
-
-    logger.info("Done");
   }
 }

@@ -1,6 +1,5 @@
 package dropship;
 
-import com.google.common.base.CaseFormat;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
@@ -45,19 +44,19 @@ class Settings {
   }
 
   Optional<String> mavenRepoUrl() {
-    return loadProperty("repo.remote.url");
+    return loadProperty("repo.remote-url");
   }
 
   String localRepoPath() {
-    return loadProperty("repo.local.path", ".m2/repository");
+    return loadProperty("repo.local-path", ".m2/repository");
   }
 
   String dropshipVersion() {
-    return loadProperty("dropship.xArtifactVersion", "0.0");
+    return loadProperty("dropship.x-artifact-version", "0.0");
   }
 
   List<String> additionalClasspathPaths() {
-    Optional<String> additionalClasspathPathsString = loadProperty("dropship.additional.paths");
+    Optional<String> additionalClasspathPathsString = loadProperty("dropship.additional-paths");
     if (additionalClasspathPathsString.isPresent()) {
       return ImmutableList.copyOf(CSV.split(additionalClasspathPathsString.get()));
     } else {
@@ -79,7 +78,7 @@ class Settings {
   }
 
   double statsdSampleRate() {
-    Optional<String> statsdSampleRateString = loadProperty("statsd.samplerate");
+    Optional<String> statsdSampleRateString = loadProperty("statsd.sample-rate");
     if (statsdSampleRateString.isPresent()) {
       return Double.parseDouble(statsdSampleRateString.get());
     } else {
@@ -106,7 +105,7 @@ class Settings {
     URL url = null;
 
     // Try current working directory
-    File propertiesFile = new File(DEFAULT_CONFIG_FILE_NAME);
+    File propertiesFile = new File(".", DEFAULT_CONFIG_FILE_NAME);
     if (propertiesFile.exists()) {
       url = propertiesFile.toURI().toURL();
     }
@@ -164,7 +163,7 @@ class Settings {
         if (manifestEntryKey.startsWith("X-")) {
           manifestEntryKey = manifestEntryKey.substring(2);
         }
-        String versionPropertiesKey = "dropship." + CaseFormat.LOWER_HYPHEN.to(CaseFormat.LOWER_CAMEL, manifestEntryKey);
+        String versionPropertiesKey = "dropship." + manifestEntryKey.toLowerCase();
         System.setProperty(versionPropertiesKey, attributeEntry.getValue().toString());
         versionProperties.setProperty(versionPropertiesKey, attributeEntry.getValue().toString());
       }
