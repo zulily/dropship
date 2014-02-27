@@ -17,10 +17,10 @@ If you omit the version, Dropship will automatically run the latest version of y
 If you need to manage versions of multiple artifacts, then use `dropship.properties` to map them.
 
     #dropship.properties
-    repo.remote.url = http://some-other-repo/
-    repo.local.path = /tmp
+    repo.remote-url = http://some-other-repo/
+    repo.local-path = /tmp
 
-    dropship.additional.paths = /tmp/resources
+    dropship.additional-paths = /tmp/resources
 
     # You can leave older entries, they will be ignored and you can use this as a deploy log
     # 2012-12-23
