@@ -1,13 +1,9 @@
-package dropship;
+package dropship.logging;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Charsets;
-import com.google.common.base.Functions;
-import com.google.common.base.Optional;
-import dagger.Module;
-import dagger.Provides;
+import dropship.Settings;
 
-import javax.inject.Singleton;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -16,31 +12,11 @@ import java.util.Random;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-abstract class StatsdStatsLogger {
+public abstract class StatsdStatsLogger {
 
-  @Module(library = true, complete = false)
-  static class StatsModule {
-    @Provides
-    @Singleton
-    StatsdStatsLogger provideStatsLogger(Settings settings, Logger logger) {
-      Optional<String> host = settings.statsdHost();
-      Optional<Integer> port = settings.statsdPort();
+  static final class NoopLogger extends StatsdStatsLogger {
 
-      logger.info("Statsd configuration: host=%s, port=%s", host.or("<not set>"), port.transform(Functions.toStringFunction()).or("<not set>"));
-
-      if (host.isPresent() && port.isPresent()) {
-        return new StatsdStatsLoggerImpl(settings, logger, host.get(), port.get());
-      } else if (host.isPresent()) {
-        return new StatsdStatsLoggerImpl(settings, logger, host.get());
-      } else {
-        return new NoopLogger(settings);
-      }
-    }
-  }
-
-  private static final class NoopLogger extends StatsdStatsLogger {
-
-    private NoopLogger(Settings settings) {
+    NoopLogger(Settings settings) {
       super(settings);
     }
 
@@ -50,7 +26,7 @@ abstract class StatsdStatsLogger {
     }
   }
 
-  private static final class StatsdStatsLoggerImpl extends StatsdStatsLogger {
+  static final class StatsdStatsLoggerImpl extends StatsdStatsLogger {
 
     private final Logger logger;
     private final InetSocketAddress address;

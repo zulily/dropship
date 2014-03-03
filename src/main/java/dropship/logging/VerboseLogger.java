@@ -1,4 +1,4 @@
-package dropship;
+package dropship.logging;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -10,7 +10,7 @@ import java.util.Date;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @Singleton
-class VerboseLogger extends Logger {
+final class VerboseLogger extends Logger {
 
   private final SimpleDateFormat dateFormat;
   private final String jvmName;

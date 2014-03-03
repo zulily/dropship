@@ -5,42 +5,67 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
 import com.google.common.io.Resources;
+import dropship.logging.Logger;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.jar.Manifest;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagate;
 
-@Singleton
-class Settings {
+public abstract class Settings {
 
   private static final CharMatcher GAV_DELIMITER = CharMatcher.is(':');
   private static final CharMatcher ALIAS_DELIMITER = CharMatcher.is('/');
   private static final String DEFAULT_CONFIG_FILE_NAME = "dropship.properties";
   private static final Splitter CSV = Splitter.on(',').trimResults().omitEmptyStrings();
-
   static final Joiner GAV_JOINER = Joiner.on(':');
-  static final Splitter GAV_SPLITTER = Splitter.on(GAV_DELIMITER).trimResults().omitEmptyStrings();
-  static final Splitter ALIAS_SPLITTER = Splitter.on(ALIAS_DELIMITER).trimResults().omitEmptyStrings().limit(2);
+  private static final Splitter GAV_SPLITTER = Splitter.on(GAV_DELIMITER).trimResults().omitEmptyStrings();
+  private static final Splitter ALIAS_SPLITTER = Splitter.on(ALIAS_DELIMITER).trimResults().omitEmptyStrings().limit(2);
 
-  private final Logger logger;
+  protected final Logger logger;
   private final Properties cache = new Properties();
-
   private volatile boolean loaded = false;
 
-  @Inject
-  Settings(Logger logger) {
+  protected Settings(Logger logger) {
     this.logger = checkNotNull(logger, "logger");
+  }
+
+  public final String groupArtifactString() {
+    String requestedArtifact = requestedArtifact();
+    return resolveArtifact(requestedArtifact);
+  }
+
+  abstract String requestedArtifact();
+
+  abstract String resolveArtifact(String request);
+
+  public abstract String mainClassName();
+
+  abstract ImmutableList<String> commandLineArguments();
+
+  protected String resolveArtifactFromGroupArtifactId(String request) {
+    ImmutableList<String> tokens = ImmutableList.copyOf(GAV_SPLITTER.split(request));
+
+    checkArgument(tokens.size() > 1, "Require groupId:artifactId[:version]");
+    checkArgument(tokens.size() < 4, "Require groupId:artifactId[:version]");
+
+    if (tokens.size() == 3) {
+      return request;
+    }
+
+    String resolvedArtifactId = loadProperty(request).or("[0,)");
+    return GAV_JOINER.join(tokens.get(0), tokens.get(1), resolvedArtifactId);
   }
 
   Optional<String> mavenRepoUrl() {
@@ -64,11 +89,11 @@ class Settings {
     }
   }
 
-  Optional<String> statsdHost() {
+  public Optional<String> statsdHost() {
     return loadProperty("statsd.host");
   }
 
-  Optional<Integer> statsdPort() {
+  public Optional<Integer> statsdPort() {
     Optional<String> statsdPortString = loadProperty("statsd.port");
     if (statsdPortString.isPresent()) {
       return Optional.of(Integer.parseInt(statsdPortString.get()));
@@ -77,7 +102,7 @@ class Settings {
     }
   }
 
-  double statsdSampleRate() {
+  public double statsdSampleRate() {
     Optional<String> statsdSampleRateString = loadProperty("statsd.sample-rate");
     if (statsdSampleRateString.isPresent()) {
       return Double.parseDouble(statsdSampleRateString.get());
@@ -191,4 +216,89 @@ class Settings {
       return Optional.absent();
     }
   }
+
+  static final class ExplicitArtifactArguments extends Settings {
+
+    private final String requestedArtifact;
+    private final String mainClassName;
+    private final Iterable<String> args;
+
+    public ExplicitArtifactArguments(Logger logger, String[] args) {
+      super(logger);
+      checkArgument(args.length >= 2);
+      this.requestedArtifact = args[0];
+      this.mainClassName = args[1];
+      this.args = Iterables.skip(Arrays.asList(args), 2);
+    }
+
+    @Override
+    String requestedArtifact() {
+      return requestedArtifact;
+    }
+
+    @Override
+    String resolveArtifact(String request) {
+      return resolveArtifactFromGroupArtifactId(request);
+    }
+
+    @Override
+    public String mainClassName() {
+      return mainClassName;
+    }
+
+    @Override
+    ImmutableList<String> commandLineArguments() {
+      return ImmutableList.copyOf(args);
+    }
+  }
+
+  static final class AliasArguments extends Settings {
+
+    private final String alias;
+    private final Iterable<String> args;
+
+    public AliasArguments(Logger logger, String[] args) {
+      super(logger);
+      checkArgument(args.length >= 1);
+      this.alias = args[0];
+      this.args = Iterables.skip(Arrays.asList(args), 1);
+    }
+
+    @Override
+    String requestedArtifact() {
+      return alias;
+    }
+
+    @Override
+    String resolveArtifact(String request) {
+
+      String aliasPropertyName = "alias." + request;
+      Optional<String> resolvedAlias = loadProperty(aliasPropertyName);
+
+      if (resolvedAlias.isPresent()) {
+        return resolveArtifactFromGroupArtifactId(ALIAS_SPLITTER.splitToList(resolvedAlias.get()).get(0));
+      } else {
+        throw new RuntimeException("Could not resolve alias \"" + request + "\" to artifact ID. Make sure \"alias." + request + "\" is configured in dropship properties.");
+      }
+    }
+
+    @Override
+    public String mainClassName() {
+
+      String aliasPropertyName = "alias." + alias;
+      Optional<String> resolvedAlias = loadProperty(aliasPropertyName);
+
+      if (resolvedAlias.isPresent()) {
+        return ALIAS_SPLITTER.splitToList(resolvedAlias.get()).get(1);
+      } else {
+        throw new RuntimeException("Could not resolve alias \"" + alias + "\" to main class name. Make sure \"alias." + alias + "\" is configured in dropship properties.");
+      }
+    }
+
+    @Override
+    ImmutableList<String> commandLineArguments() {
+      return ImmutableList.copyOf(args);
+    }
+  }
+
 }

@@ -1,6 +1,7 @@
 package dropship;
 
 import com.google.common.collect.Maps;
+import dropship.logging.Logger;
 import org.sonatype.aether.AbstractRepositoryListener;
 import org.sonatype.aether.RepositoryEvent;
 import org.sonatype.aether.artifact.Artifact;

@@ -1,9 +1,10 @@
-package dropship;
+package dropship.snitch;
 
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
+import dropship.logging.Logger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -14,7 +15,7 @@ import java.util.concurrent.TimeoutException;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @Singleton
-class Snitch {
+public class Snitch {
 
   private final Logger logger;
   private final ServiceManager snitches;

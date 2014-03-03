@@ -1,4 +1,4 @@
-package dropship;
+package dropship.snitch;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
@@ -9,6 +9,10 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import dropship.ClassLoaderService;
+import dropship.Settings;
+import dropship.logging.Logger;
+import dropship.logging.StatsdStatsLogger;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -44,11 +48,11 @@ abstract class SnitchService extends AbstractScheduledService {
   private final ImmutableList<String> hostKeys;
   private final ImmutableList<String> methodKeys;
 
-  public SnitchService(CommandLineArgs args) {
-    args = checkNotNull(args);
-    this.gavKeys = ImmutableList.copyOf(Iterables.limit(Splitter.on(':').split(CharMatcher.is('.').replaceFrom(args.groupArtifactString(), '-')), 2));
+  public SnitchService(Settings settings) {
+    settings = checkNotNull(settings);
+    this.gavKeys = ImmutableList.copyOf(Iterables.limit(Splitter.on(':').split(CharMatcher.is('.').replaceFrom(settings.groupArtifactString(), '-')), 2));
     this.hostKeys = ImmutableList.of(getHostname());
-    String simplifiedMainClassName = Iterables.getLast(Splitter.on('.').split(args.mainClassName()));
+    String simplifiedMainClassName = Iterables.getLast(Splitter.on('.').split(settings.mainClassName()));
     this.methodKeys = ImmutableList.of(simplifiedMainClassName);
   }
 
@@ -109,8 +113,8 @@ abstract class SnitchService extends AbstractScheduledService {
     private final Map<String, Long> collectionCounts;
 
     @Inject
-    public GarbageCollectionSnitch(StatsdStatsLogger logger, CommandLineArgs args) {
-      super(args);
+    public GarbageCollectionSnitch(StatsdStatsLogger logger, Settings settings) {
+      super(settings);
 
       this.logger = checkNotNull(logger);
       this.mxBeans = ImmutableList.copyOf(ManagementFactory.getGarbageCollectorMXBeans());
@@ -157,8 +161,8 @@ abstract class SnitchService extends AbstractScheduledService {
     private long lastCpuTimeNanos = 0L;
 
     @Inject
-    public ThreadSnitch(StatsdStatsLogger logger, CommandLineArgs args, Logger console) {
-      super(args);
+    public ThreadSnitch(StatsdStatsLogger logger, Settings settings, Logger console) {
+      super(settings);
 
       this.logger = checkNotNull(logger);
       this.mxBean = ManagementFactory.getThreadMXBean();
@@ -207,8 +211,8 @@ abstract class SnitchService extends AbstractScheduledService {
     private final MemoryMXBean mxBean;
 
     @Inject
-    public MemorySnitch(StatsdStatsLogger logger, CommandLineArgs args) {
-      super(args);
+    public MemorySnitch(StatsdStatsLogger logger, Settings settings) {
+      super(settings);
 
       this.logger = checkNotNull(logger);
       this.mxBean = ManagementFactory.getMemoryMXBean();
@@ -251,8 +255,8 @@ abstract class SnitchService extends AbstractScheduledService {
     private final ClassLoadingMXBean mxBean;
 
     @Inject
-    public ClassLoadingSnitch(StatsdStatsLogger logger, CommandLineArgs args, ClassLoaderService clCreator) {
-      super(args);
+    public ClassLoadingSnitch(StatsdStatsLogger logger, Settings settings, ClassLoaderService clCreator) {
+      super(settings);
 
       this.logger = checkNotNull(logger);
       this.clCreator = checkNotNull(clCreator);
@@ -280,8 +284,8 @@ abstract class SnitchService extends AbstractScheduledService {
     private final File cwd;
 
     @Inject
-    public DiskSpaceSnitch(StatsdStatsLogger logger, CommandLineArgs args) {
-      super(args);
+    public DiskSpaceSnitch(StatsdStatsLogger logger, Settings settings) {
+      super(settings);
 
       this.logger = checkNotNull(logger);
       this.cwd = new File(".");
@@ -305,8 +309,8 @@ abstract class SnitchService extends AbstractScheduledService {
     private final RuntimeMXBean mxBean;
 
     @Inject
-    public UptimeSnitch(StatsdStatsLogger logger, CommandLineArgs args) {
-      super(args);
+    public UptimeSnitch(StatsdStatsLogger logger, Settings settings) {
+      super(settings);
 
       this.logger = checkNotNull(logger);
       this.mxBean = ManagementFactory.getRuntimeMXBean();

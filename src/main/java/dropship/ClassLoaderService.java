@@ -8,22 +8,22 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 @Singleton
-final class ClassLoaderService {
+public final class ClassLoaderService {
 
-  private final CommandLineArgs args;
+  private final Settings settings;
   private final MavenClassLoader.ClassLoaderBuilder clBuilder;
 
   private URLClassLoader classLoader = null;
 
   @Inject
-  ClassLoaderService(CommandLineArgs args, MavenClassLoader.ClassLoaderBuilder clBuilder) {
-    this.args = checkNotNull(args, "args");
+  ClassLoaderService(Settings settings, MavenClassLoader.ClassLoaderBuilder clBuilder) {
+    this.settings = checkNotNull(settings, "settings");
     this.clBuilder = checkNotNull(clBuilder, "class loader builder");
   }
 
   public synchronized URLClassLoader getClassLoader() {
     if (classLoader == null) {
-      classLoader = clBuilder.forMavenCoordinates(args.groupArtifactString());
+      classLoader = clBuilder.forMavenCoordinates(settings.groupArtifactString());
     }
 
     checkState(classLoader != null, "Classloader has not been created");

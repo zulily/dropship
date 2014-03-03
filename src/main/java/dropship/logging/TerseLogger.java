@@ -1,4 +1,4 @@
-package dropship;
+package dropship.logging;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -10,7 +10,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 
 @Singleton
-class TerseLogger extends Logger {
+final class TerseLogger extends Logger {
 
   private final SimpleDateFormat dateFormat;
   private final PrintStream destination;
@@ -24,19 +24,19 @@ class TerseLogger extends Logger {
   }
 
   @Override
-  void debug(String format, Object arg, Object... otherArgs) {
+  public void debug(String format, Object arg, Object... otherArgs) {
   }
 
   @Override
-  void debug(String message) {
+  public void debug(String message) {
   }
 
   @Override
-  void info(String format, Object arg, Object... otherArgs) {
+  public void info(String format, Object arg, Object... otherArgs) {
   }
 
   @Override
-  void info(String message) {
+  public void info(String message) {
   }
 
   @Override

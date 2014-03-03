@@ -1,6 +1,8 @@
 package dropship;
 
 import com.google.common.collect.Multiset;
+import dropship.logging.Logger;
+import dropship.logging.LoggingModule;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -12,11 +14,11 @@ import static org.fest.assertions.Assertions.assertThat;
 public class MavenClassLoaderTest {
 
   private Settings settings;
-  private VerboseLogger logger;
+  private Logger logger;
 
   @Before public void setup() {
-    logger = new VerboseLogger(new SimpleDateFormat(), "test", System.err);
-    settings = new Settings(logger);
+    logger = new LoggingModule().provideTerseLogger(new SimpleDateFormat(), System.err);
+    settings = new SettingsModule().provideSettings(logger, new String[]{"joda-time:joda-time:[1.6,)", "org.joda.time.chrono.BuddhistChronology"});
   }
 
   @Test

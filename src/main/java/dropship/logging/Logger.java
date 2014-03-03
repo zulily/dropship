@@ -1,4 +1,4 @@
-package dropship;
+package dropship.logging;
 
 import java.io.PrintStream;
 import java.util.Date;
@@ -6,37 +6,37 @@ import java.util.Date;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 
-abstract class Logger {
+public abstract class Logger {
 
   protected abstract PrintStream destination();
 
   protected abstract Object format(Date date, long tid, String level, String line);
 
-  void debug(String format, Object arg, Object... otherArgs) {
+  public void debug(String format, Object arg, Object... otherArgs) {
     debug(format(format, arg, otherArgs));
   }
 
-  void debug(String message) {
+  public void debug(String message) {
     write("DEBUG", message);
   }
 
-  void info(String format, Object arg, Object... otherArgs) {
+  public void info(String format, Object arg, Object... otherArgs) {
     info(format(format, arg, otherArgs));
   }
 
-  void info(String message) {
+  public void info(String message) {
     write(" INFO", message);
   }
 
-  final void warn(String format, Object arg, Object... otherArgs) {
+  public final void warn(String format, Object arg, Object... otherArgs) {
     warn(format(format, arg, otherArgs));
   }
 
-  final void warn(String message) {
+  public final void warn(String message) {
     write(" WARN", message);
   }
 
-  final void warn(Throwable e, String message) {
+  public final void warn(Throwable e, String message) {
     warn(message);
     e.printStackTrace(destination());
   }
