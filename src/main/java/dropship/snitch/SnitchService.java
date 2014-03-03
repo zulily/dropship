@@ -48,7 +48,7 @@ abstract class SnitchService extends AbstractScheduledService {
   private final ImmutableList<String> methodKeys;
 
   public SnitchService(Settings settings) {
-    settings = checkNotNull(settings);
+    checkNotNull(settings, "settings");
     this.gavKeys = ImmutableList.copyOf(Iterables.limit(Splitter.on(':').split(CharMatcher.is('.').replaceFrom(settings.groupArtifactString(), '-')), 2));
     this.hostKeys = ImmutableList.of(getHostname());
     String simplifiedMainClassName = Iterables.getLast(Splitter.on('.').split(settings.mainClassName()));
