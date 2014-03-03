@@ -122,7 +122,7 @@ public final class MavenClassLoader {
     private RepositorySystemSession newSession(RepositorySystem system) {
       MavenRepositorySystemSession session = new MavenRepositorySystemSession();
 
-      session.setRepositoryListener(new LoggingRepositoryListener(logger));
+      session.setRepositoryListener(logger.listener());
       session.setChecksumPolicy(RepositoryPolicy.CHECKSUM_POLICY_FAIL);
       session.setIgnoreInvalidArtifactDescriptor(false);
       session.setIgnoreMissingArtifactDescriptor(false);

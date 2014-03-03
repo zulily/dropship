@@ -1,5 +1,7 @@
 package dropship.logging;
 
+import org.sonatype.aether.AbstractRepositoryListener;
+
 import java.io.PrintStream;
 import java.util.Date;
 
@@ -9,6 +11,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public abstract class Logger {
 
   protected abstract PrintStream destination();
+
+  public abstract AbstractRepositoryListener listener();
 
   protected abstract Object format(Date date, long tid, String level, String line);
 

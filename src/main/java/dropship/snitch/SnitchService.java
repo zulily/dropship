@@ -9,7 +9,6 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import dropship.ClassLoaderService;
 import dropship.Settings;
 import dropship.logging.Logger;
 import dropship.logging.StatsdStatsLogger;
@@ -251,15 +250,13 @@ abstract class SnitchService extends AbstractScheduledService {
   static final class ClassLoadingSnitch extends SnitchService {
 
     private final StatsdStatsLogger logger;
-    private final ClassLoaderService clCreator;
     private final ClassLoadingMXBean mxBean;
 
     @Inject
-    public ClassLoadingSnitch(StatsdStatsLogger logger, Settings settings, ClassLoaderService clCreator) {
+    public ClassLoadingSnitch(StatsdStatsLogger logger, Settings settings) {
       super(settings);
 
       this.logger = checkNotNull(logger);
-      this.clCreator = checkNotNull(clCreator);
       this.mxBean = ManagementFactory.getClassLoadingMXBean();
     }
 
@@ -268,12 +265,10 @@ abstract class SnitchService extends AbstractScheduledService {
       int loaded = mxBean.getLoadedClassCount();
       long totalLoaded = mxBean.getTotalLoadedClassCount();
       long unloaded = mxBean.getUnloadedClassCount();
-      int urls = clCreator.getClassLoader().getURLs().length;
 
       logger.increment(key("classes-loaded"), loaded);
       logger.increment(key("classes-loaded-total"), totalLoaded);
       logger.increment(key("classes-unloaded"), unloaded);
-      logger.increment(key("classpath-urls"), urls);
     }
   }
 

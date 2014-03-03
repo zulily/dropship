@@ -40,8 +40,6 @@ public final class Dropship {
       System.exit(1);
     }
 
-    System.setProperty("dropship.running", "true");
-
     logger.info("Loading main class %s", settings.mainClassName());
 
     Class<?> mainClass = loader.loadClass(settings.mainClassName());
@@ -50,12 +48,12 @@ public final class Dropship {
 
     Method mainMethod = mainClass.getMethod("main", String[].class);
 
-    Iterable<String> mainArgs = settings.commandLineArguments();
-
     logger.info("Invoking main method of %s", mainClass.getName());
+
+    System.setProperty("dropship.running", "true");
 
     snitch.start();
 
-    mainMethod.invoke(null, (Object) Iterables.toArray(mainArgs, String.class));
+    mainMethod.invoke(null, (Object) Iterables.toArray(settings.commandLineArguments(), String.class));
   }
 }

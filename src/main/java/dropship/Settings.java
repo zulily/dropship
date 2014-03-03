@@ -29,7 +29,7 @@ public abstract class Settings {
   private static final CharMatcher ALIAS_DELIMITER = CharMatcher.is('/');
   private static final String DEFAULT_CONFIG_FILE_NAME = "dropship.properties";
   private static final Splitter CSV = Splitter.on(',').trimResults().omitEmptyStrings();
-  static final Joiner GAV_JOINER = Joiner.on(':');
+  private static final Joiner GAV_JOINER = Joiner.on(':');
   private static final Splitter GAV_SPLITTER = Splitter.on(GAV_DELIMITER).trimResults().omitEmptyStrings();
   private static final Splitter ALIAS_SPLITTER = Splitter.on(ALIAS_DELIMITER).trimResults().omitEmptyStrings().limit(2);
 

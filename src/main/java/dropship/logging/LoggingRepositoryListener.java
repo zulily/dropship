@@ -1,12 +1,11 @@
-package dropship;
+package dropship.logging;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Maps;
-import dropship.logging.Logger;
 import org.sonatype.aether.AbstractRepositoryListener;
 import org.sonatype.aether.RepositoryEvent;
 import org.sonatype.aether.artifact.Artifact;
 
-import javax.inject.Inject;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -17,13 +16,12 @@ class LoggingRepositoryListener extends AbstractRepositoryListener {
   private final Map<String, Long> startTimes = Maps.newHashMap();
   private final Logger logger;
 
-  @Inject
   LoggingRepositoryListener(Logger logger) {
     this.logger = checkNotNull(logger, "logger");
   }
 
   private String artifactAsString(Artifact artifact) {
-    return Settings.GAV_JOINER.join(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
+    return Joiner.on(':').join(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
   }
 
   @Override

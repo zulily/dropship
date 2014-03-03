@@ -8,7 +8,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 @Singleton
-public final class ClassLoaderService {
+final class ClassLoaderService {
 
   private final Settings settings;
   private final MavenClassLoader.ClassLoaderBuilder clBuilder;
@@ -21,7 +21,7 @@ public final class ClassLoaderService {
     this.clBuilder = checkNotNull(clBuilder, "class loader builder");
   }
 
-  public synchronized URLClassLoader getClassLoader() {
+  synchronized URLClassLoader getClassLoader() {
     if (classLoader == null) {
       classLoader = clBuilder.forMavenCoordinates(settings.groupArtifactString());
     }

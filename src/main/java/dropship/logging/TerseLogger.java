@@ -1,5 +1,7 @@
 package dropship.logging;
 
+import org.sonatype.aether.AbstractRepositoryListener;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.PrintStream;
@@ -42,6 +44,11 @@ final class TerseLogger extends Logger {
   @Override
   protected PrintStream destination() {
     return destination;
+  }
+
+  @Override
+  public AbstractRepositoryListener listener() {
+    return new AbstractRepositoryListener() {};
   }
 
   @Override
