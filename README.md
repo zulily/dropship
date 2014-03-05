@@ -10,22 +10,21 @@ You can stop building shaded jars and pushing artifacts into production. Instead
 
 * clone this repo
 * run `mvn package` to build Dropship
-* explore the `/samples` directory to see some examples
+* explore the `/examples` directory to see some examples
 * try running your own applications!
 
-### Usage:
+### Usage
 
     java -jar dropship.jar mygroup:myartifact[:myversion] mygroup.myartifact.Main args...
 
 If you omit the version, Dropship will automatically run the latest version of your artifact.
 
-### Example:
+### Example
 
     // Run the latest Clojure CLI:
     java -Dverbose -jar dropship.jar org.clojure:clojure clojure.main
 
-
-### Features:
+### Features
 
 * automatic dependency resolution
 * automatic classpath construction
