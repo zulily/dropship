@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2014 zulily, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package dropship;
 
 import com.google.common.base.CharMatcher;
@@ -23,6 +38,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagate;
 
+/**
+ * Exposes settings configured via command-line, environment,
+ * and/or properties file. Subclasses exist to handle explicit
+ * artifact specification, and aliased artifact specification.
+ */
 public abstract class Settings {
 
   private static final CharMatcher GAV_DELIMITER = CharMatcher.is(':');
@@ -41,6 +61,10 @@ public abstract class Settings {
     this.logger = checkNotNull(logger, "logger");
   }
 
+  /**
+   * Returns the group and artifact ID specified by the dropship command-line
+   * configuration, resolving any aliases if necessary. 
+   */
   public final String groupArtifactString() {
     String requestedArtifact = requestedArtifact();
     return resolveArtifact(requestedArtifact);
@@ -50,6 +74,10 @@ public abstract class Settings {
 
   abstract String resolveArtifact(String request);
 
+  /**
+   * Returns the name of the "main" class specified by the dropship
+   * command-line configuration.
+   */
   public abstract String mainClassName();
 
   abstract ImmutableList<String> commandLineArguments();
@@ -89,10 +117,12 @@ public abstract class Settings {
     }
   }
 
+  /** Returns the optional hostname of the statsd server to use for basic metrics. */
   public Optional<String> statsdHost() {
     return loadProperty("statsd.host");
   }
 
+  /** Returns the optional port number of the statsd server to use for basic metrics. */
   public Optional<Integer> statsdPort() {
     Optional<String> statsdPortString = loadProperty("statsd.port");
     if (statsdPortString.isPresent()) {
@@ -102,6 +132,7 @@ public abstract class Settings {
     }
   }
 
+  /** Returns the sample rate to use when sending metrics to statsd. */
   public double statsdSampleRate() {
     Optional<String> statsdSampleRateString = loadProperty("statsd.sample-rate");
     if (statsdSampleRateString.isPresent()) {
@@ -223,6 +254,7 @@ public abstract class Settings {
     private final String mainClassName;
     private final Iterable<String> args;
 
+    // TODO : scope
     public ExplicitArtifactArguments(Logger logger, String[] args) {
       super(logger);
       checkArgument(args.length >= 2);
@@ -257,6 +289,7 @@ public abstract class Settings {
     private final String alias;
     private final Iterable<String> args;
 
+    // TODO : scope
     public AliasArguments(Logger logger, String[] args) {
       super(logger);
       checkArgument(args.length >= 1);
