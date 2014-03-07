@@ -126,6 +126,11 @@ public abstract class Settings {
     }
   }
 
+  /** Returns true if dropship should run in offline mode. */
+  public boolean offlineMode() {
+    return "true".equalsIgnoreCase(loadProperty("dropship.offline", "false"));
+  }
+
   /** Returns the optional hostname of the statsd server to use for basic metrics. */
   public Optional<String> statsdHost() {
     return loadProperty("statsd.host");

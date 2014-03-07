@@ -122,6 +122,7 @@ final class MavenClassLoader {
     private RepositorySystemSession newSession(RepositorySystem system) {
       MavenRepositorySystemSession session = new MavenRepositorySystemSession();
 
+      session.setOffline(settings.offlineMode());
       session.setRepositoryListener(logger.listener());
       session.setChecksumPolicy(RepositoryPolicy.CHECKSUM_POLICY_FAIL);
       session.setIgnoreInvalidArtifactDescriptor(false);
