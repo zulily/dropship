@@ -25,18 +25,38 @@ final class TerseLogger extends Logger {
     this.destination = checkNotNull(destination, "destination");
   }
 
+  /**
+   * Ignores all parameters, does nothing. Debug is disabled in this logger.
+   * @param format ignored
+   * @param arg ignored
+   * @param otherArgs ignored
+   */
   @Override
   public void debug(String format, Object arg, Object... otherArgs) {
   }
 
+  /**
+   * Ignores all parameters, does nothing. Debug is disabled in this logger.
+   * @param ignored ignored
+   */
   @Override
-  public void debug(String message) {
+  public void debug(String ignored) {
   }
 
+  /**
+   * Ignores all parameters, does nothing. Info is disabled in this logger.
+   * @param format ignored
+   * @param arg ignored
+   * @param otherArgs ignored
+   */
   @Override
   public void info(String format, Object arg, Object... otherArgs) {
   }
 
+  /**
+   * Ignores all parameters, does nothing. Info is disabled in this logger.
+   * @param message message to write
+   */
   @Override
   public void info(String message) {
   }
@@ -46,6 +66,9 @@ final class TerseLogger extends Logger {
     return destination;
   }
 
+  /**
+   * Returns a repository listener with no overrides.
+   */
   @Override
   public AbstractRepositoryListener listener() {
     return new AbstractRepositoryListener() {};

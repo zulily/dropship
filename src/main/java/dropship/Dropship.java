@@ -27,16 +27,15 @@ import java.net.URLClassLoader;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
- * Dropship main class. This class contains the entry point when dropship is 
- * run as an exacutable jar.
- * 
+ * Dropship main class. This class contains the entry point when dropship is
+ * run as an executable jar.
  */
 public final class Dropship {
 
   /**
    * Dropship command-line interface. Arguments specify an artifact by
    * group ID, artifact ID, and an optional version. This specification is
-   * either explicit, using {@code group:artifact[:version]} syntax, 
+   * either explicit, using {@code group:artifact[:version]} syntax,
    * or implicit via an alias.
    */
   public static void main(String[] args) throws Exception {

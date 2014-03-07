@@ -11,6 +11,9 @@ import javax.inject.Singleton;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 
+/**
+ * Dagger module that provides logging.
+ */
 @Module(library = true, complete = false)
 public class LoggingModule {
 
@@ -27,7 +30,7 @@ public class LoggingModule {
     } else if (host.isPresent()) {
       return new StatsdStatsLogger.StatsdStatsLoggerImpl(settings, logger, host.get());
     } else {
-      return new StatsdStatsLogger.NoopLogger(settings);
+      return new StatsdStatsLogger.NoOpLogger(settings);
     }
   }
 

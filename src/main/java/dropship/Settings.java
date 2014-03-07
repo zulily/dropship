@@ -40,7 +40,16 @@ import static com.google.common.base.Throwables.propagate;
 
 /**
  * Exposes settings configured via command-line, environment,
- * and/or properties file. Subclasses exist to handle explicit
+ * and/or properties file. Subclasses handle various methods
+ * of specifying an artifact to load.
+ * <ul>
+ *   <li>{@link dropship.Settings.ExplicitArtifactArguments} -
+ *   handles explicit {@code group:artifact[:version]} specs</li>
+ *   <li>{@link dropship.Settings.AliasArguments} - handles
+ *   use of aliases, which map a single token to a group id,
+ *   artifact id, and main class</li>
+ * </ul>
+ * Subclasses exist to handle explicit
  * artifact specification, and aliased artifact specification.
  */
 public abstract class Settings {
@@ -63,7 +72,7 @@ public abstract class Settings {
 
   /**
    * Returns the group and artifact ID specified by the dropship command-line
-   * configuration, resolving any aliases if necessary. 
+   * configuration, resolving any aliases if necessary.
    */
   public final String groupArtifactString() {
     String requestedArtifact = requestedArtifact();

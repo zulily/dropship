@@ -14,6 +14,10 @@ import java.util.concurrent.TimeoutException;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * The Snitch runs multiple services which watch system resources
+ * and report metrics to an optional statsd server.
+ */
 @Singleton
 public class Snitch {
 
@@ -52,6 +56,9 @@ public class Snitch {
     });
   }
 
+  /**
+   * Starts all registered snitch services asynchronously.
+   */
   public void start() {
     logger.info("Starting snitch");
     snitches.startAsync();

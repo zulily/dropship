@@ -24,6 +24,10 @@ class LoggingRepositoryListener extends AbstractRepositoryListener {
     return Joiner.on(':').join(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
   }
 
+  /**
+   * {@inheritDoc}
+   * @param event {@inheritDoc}
+   */
   @Override
   public void artifactDownloading(RepositoryEvent event) {
     super.artifactDownloading(event);
@@ -32,6 +36,10 @@ class LoggingRepositoryListener extends AbstractRepositoryListener {
     startTimes.put(key, System.nanoTime());
   }
 
+  /**
+   * {@inheritDoc}
+   * @param event {@inheritDoc}
+   */
   @Override
   public void artifactDownloaded(RepositoryEvent event) {
     super.artifactDownloaded(event);
@@ -45,6 +53,10 @@ class LoggingRepositoryListener extends AbstractRepositoryListener {
     logger.info("Downloaded %s (%d bytes) in %gms (%g KBytes/sec)", key, size, downloadTimeMs, downloadRateKBytesPerMs * 1000);
   }
 
+  /**
+   * {@inheritDoc}
+   * @param event {@inheritDoc}
+   */
   @Override
   public void artifactResolved(RepositoryEvent event) {
     super.artifactResolved(event);

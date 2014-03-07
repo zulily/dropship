@@ -12,17 +12,20 @@ import java.util.Random;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * Base class for logging stats to statsd.
+ */
 public abstract class StatsdStatsLogger {
 
-  static final class NoopLogger extends StatsdStatsLogger {
+  static final class NoOpLogger extends StatsdStatsLogger {
 
-    NoopLogger(Settings settings) {
+    NoOpLogger(Settings settings) {
       super(settings);
     }
 
     @Override
     protected void doSend(String stat) {
-      // no-op
+      // no-op!
     }
   }
 
@@ -76,39 +79,80 @@ public abstract class StatsdStatsLogger {
     }
   }
 
-  public static final CharMatcher DISALLOWED_CHARS = CharMatcher.is('@');
+  private static final CharMatcher DISALLOWED_CHARS = CharMatcher.is('@');
   private final Random rng;
   private final double defaultSampleRate;
 
   private StatsdStatsLogger(Settings settings) {
-
     this.rng = new Random();
     this.defaultSampleRate = settings.statsdSampleRate();
   }
 
-  public final void timing(String key, long value) {
-    timing(key, value, defaultSampleRate);
+  /**
+   * Sends a timing (in milliseconds) to statsd using the default
+   * (configurable) sample rate.
+   *
+   * @param metric name of metric
+   * @param valueInMs timing value, in milliseconds
+   */
+  public final void timing(String metric, long valueInMs) {
+    timing(metric, valueInMs, defaultSampleRate);
   }
 
-  public final void timing(String key, long value, double sampleRate) {
-    send(key + ':' + value + "|ms", sampleRate);
+  /**
+   * Sends a timing (in milliseconds) to statsd using the specified
+   * sample rate.
+   *
+   * @param metric name of metric
+   * @param value timing value, in milliseconds
+   * @param sampleRate sample rate between 0.0 and 1.0 inclusive
+   */
+  public final void timing(String metric, long value, double sampleRate) {
+    send(metric + ':' + value + "|ms", sampleRate);
   }
 
-  public final void increment(String key, long magnitude) {
-    increment(key, magnitude, defaultSampleRate);
+  /**
+   * Increments a counter in statsd using the default (configurable)
+   * sample rate.
+   *
+   * @param metric name of metric
+   * @param amount amount of increment
+   */
+  public final void increment(String metric, long amount) {
+    increment(metric, amount, defaultSampleRate);
   }
 
-  public final void increment(String key, long magnitude, double sampleRate) {
-    String stat = key + ':' + magnitude + "|c";
+  /**
+   * Increments a counter in statsd using the specified sample rate.
+   *
+   * @param metric name of metric
+   * @param amount amount of increment
+   * @param sampleRate sample rate between 0.0 and 1.0 inclusive
+   */
+  public final void increment(String metric, long amount, double sampleRate) {
+    String stat = metric + ':' + amount + "|c";
     send(stat, sampleRate);
   }
 
-  public final void gauge(String key, long value) {
-    gauge(key, value, defaultSampleRate);
+  /**
+   * Sets a gauge in statsd using the default (configurable) sample rate.
+   *
+   * @param metric name of metric
+   * @param value value of gauge
+   */
+  public final void gauge(String metric, long value) {
+    gauge(metric, value, defaultSampleRate);
   }
 
-  public final void gauge(String key, long value, double sampleRate) {
-    String stat = key + ':' + value + "|g";
+  /**
+   * Sets a gauge in statsd using the specified sample rate.
+   *
+   * @param metric name of metric
+   * @param value value of gauge
+   * @param sampleRate sample rate between 0.0 and 1.0 inclusive
+   */
+  public final void gauge(String metric, long value, double sampleRate) {
+    String stat = metric + ':' + value + "|g";
     send(stat, sampleRate);
   }
 

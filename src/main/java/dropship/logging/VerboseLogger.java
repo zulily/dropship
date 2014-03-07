@@ -22,12 +22,12 @@ final class VerboseLogger extends Logger {
 
   @Inject
   VerboseLogger(SimpleDateFormat dateFormat,
-                @Named("jvmName") String jvmName,
+                @Named("jvm-name") String jvmName,
                 PrintStream destination) {
 
     this.listener = new LoggingRepositoryListener(this);
-    this.dateFormat = checkNotNull(dateFormat, "dateFormat");
-    this.jvmName = checkNotNull(jvmName, "jvmName");
+    this.dateFormat = checkNotNull(dateFormat, "date format");
+    this.jvmName = checkNotNull(jvmName, "jvm name");
     this.destination = checkNotNull(destination, "destination");
   }
 
@@ -36,6 +36,10 @@ final class VerboseLogger extends Logger {
     return destination;
   }
 
+  /**
+   * Returns a repository listener that prints message on artifact resolution
+   * and download.
+   */
   @Override
   public AbstractRepositoryListener listener() {
     return listener;

@@ -47,7 +47,7 @@ abstract class SnitchService extends AbstractScheduledService {
   private final ImmutableList<String> hostKeys;
   private final ImmutableList<String> methodKeys;
 
-  public SnitchService(Settings settings) {
+  SnitchService(Settings settings) {
     checkNotNull(settings, "settings");
     this.gavKeys = ImmutableList.copyOf(Iterables.limit(Splitter.on(':').split(CharMatcher.is('.').replaceFrom(settings.groupArtifactString(), '-')), 2));
     this.hostKeys = ImmutableList.of(getHostname());
@@ -316,5 +316,15 @@ abstract class SnitchService extends AbstractScheduledService {
       logger.increment(key("uptime-ms"), mxBean.getUptime(), 1D);
       logger.increment(key("ticks"), 1L, 1D);
     }
+  }
+
+  static class NoOp extends SnitchService {
+
+    NoOp(Settings settings) {
+      super(settings);
+    }
+
+    @Override
+    protected void runOneIteration() {}
   }
 }

@@ -36,7 +36,7 @@ final class DropshipModule {
   }
 
   @Provides
-  @Named("jvmName")
+  @Named("jvm-name")
   String provideJvmName() {
     return ManagementFactory.getRuntimeMXBean().getName();
   }

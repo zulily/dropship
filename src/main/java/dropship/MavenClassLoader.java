@@ -35,9 +35,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagate;
 
-public final class MavenClassLoader {
+final class MavenClassLoader {
 
-  public static class ClassLoaderBuilder {
+  static class ClassLoaderBuilder {
 
     private static final String COMPILE_SCOPE = "compile";
     private static final ClassLoader SHARE_NOTHING = null;
@@ -135,7 +135,6 @@ public final class MavenClassLoader {
 
       return session;
     }
-
   }
 
   /**
@@ -145,16 +144,16 @@ public final class MavenClassLoader {
    * @param gav artifact group:artifact:version, i.e. joda-time:joda-time:1.6.2
    * @return a classloader that can be used to load classes from the given artifact
    */
-  public static URLClassLoader forMavenCoordinates(Settings settings, Logger logger, String gav) {
+  static URLClassLoader forMavenCoordinates(Settings settings, Logger logger, String gav) {
     return usingCentralRepo(settings, logger).forMavenCoordinates(checkNotNull(gav));
   }
 
-  public static ClassLoaderBuilder using(Settings settings, Logger logger, String url) {
+  static ClassLoaderBuilder using(Settings settings, Logger logger, String url) {
     RemoteRepository custom = new RemoteRepository("custom", "default", url);
     return new ClassLoaderBuilder(settings, logger, custom);
   }
 
-  public static ClassLoaderBuilder usingCentralRepo(Settings settings, Logger logger) {
+  static ClassLoaderBuilder usingCentralRepo(Settings settings, Logger logger) {
     RemoteRepository central = new RemoteRepository("central", "default", "http://repo1.maven.org/maven2/");
     return new ClassLoaderBuilder(settings, logger, central);
   }
