@@ -79,7 +79,7 @@ In `dropship.properties`:
     statsd.sample-rate = 0.5
 
 If a valid statsd hostname/port are found, Dropship will output stats to statsd in the form:
-`hostname.group.artifact.mainclass.statname`
+`dropship.hostname.group.artifact.mainclass.statname`
 
 Dropship will output:
 
@@ -92,6 +92,8 @@ Dropship will output:
 * GC stats
 * **and more**
 
+![dropship stats](https://github.com/zulily/dropship/raw/master/stats.png)
+![more dropship stats](https://github.com/zulily/dropship/raw/master/more_stats.png)
 
 ## License
 
