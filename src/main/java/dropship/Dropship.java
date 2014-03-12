@@ -39,7 +39,13 @@ public final class Dropship {
    * or implicit via an alias.
    */
   public static void main(String[] args) throws Exception {
-    ObjectGraph.create(new DropshipModule(args)).get(Dropship.class).run();
+    Dropship dropship = ObjectGraph.create(new DropshipModule(args)).get(Dropship.class);
+    try {
+      dropship.run();
+    } catch (DropshipRuntimeException e) {
+      dropship.logger.warn(e.getMessage());
+      System.exit(1);
+    }
   }
 
   private final Settings settings;

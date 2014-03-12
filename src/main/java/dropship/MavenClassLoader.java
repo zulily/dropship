@@ -15,6 +15,7 @@
  */
 package dropship;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -37,6 +38,8 @@ import org.sonatype.aether.repository.RepositoryPolicy;
 import org.sonatype.aether.resolution.ArtifactResolutionException;
 import org.sonatype.aether.resolution.DependencyRequest;
 import org.sonatype.aether.resolution.DependencyResolutionException;
+import org.sonatype.aether.resolution.VersionRangeResolutionException;
+import org.sonatype.aether.transfer.ArtifactNotFoundException;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.filter.ScopeDependencyFilter;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
@@ -74,11 +77,21 @@ final class MavenClassLoader {
 
     public URLClassLoader forMavenCoordinates(String groupArtifactVersion) {
       try {
-        logger.info("Collecting maven metadata");
         CollectRequest collectRequest = createCollectRequestForGAV(groupArtifactVersion);
+        return this.forMavenCoordinates(groupArtifactVersion, collectRequest);
+      } catch (ArtifactNotFoundException e) {
+        throw new DropshipRuntimeException(e.getMessage());
+      } catch (VersionRangeResolutionException e) {
+        throw new DropshipRuntimeException(e.getMessage());
+      }
+    }
 
+    private URLClassLoader forMavenCoordinates(String groupArtifactVersion, CollectRequest request)
+      throws VersionRangeResolutionException, ArtifactNotFoundException {
+
+      try {
         logger.info("Resolving dependencies");
-        List<Artifact> artifacts = collectDependenciesIntoArtifacts(collectRequest);
+        List<Artifact> artifacts = collectDependenciesIntoArtifacts(request);
 
         logger.info("Building classpath for %s from %d URLs", groupArtifactVersion, artifacts.size());
         List<URL> urls = Lists.newArrayListWithExpectedSize(artifacts.size());
@@ -93,6 +106,8 @@ final class MavenClassLoader {
 
         return new URLClassLoader(Iterables.toArray(urls, URL.class), SHARE_NOTHING);
       } catch (Exception e) {
+        Throwables.propagateIfInstanceOf(Throwables.getRootCause(e), VersionRangeResolutionException.class);
+        Throwables.propagateIfInstanceOf(Throwables.getRootCause(e), ArtifactNotFoundException.class);
         throw propagate(e);
       }
     }
