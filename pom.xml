@@ -48,7 +48,7 @@
   <scm>
     <url>http://github.com/zulily/dropship</url>
     <connection>scm:git:git://github.com/zulily/dropship.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/zulily.dropship.git</developerConnection>
+    <developerConnection>scm:git:ssh://git@github.com/zulily/dropship.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
 
