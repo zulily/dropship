@@ -15,9 +15,7 @@ You can stop building shaded jars and pushing artifacts into production. Instead
 
 #### Or...
 
-* [Download v1.0](download)
-
-[download]: "http://search.maven.org/remotecontent?filepath=com/zulily/dropship/dropship/1.0/dropship-1.0.jar"
+* [Download v1.0](http://search.maven.org/remotecontent?filepath=com/zulily/dropship/dropship/1.0/dropship-1.0.jar)
 
 ### Usage
 
@@ -74,7 +72,7 @@ Aliases can then be used like:
 
 ### JVM Stats
 
-As if that wasn't enough, Dropship can also output JVM metrics for any process it runs to a [statsd](statsd) instance!
+As if that wasn't enough, Dropship can also output JVM metrics for any process it runs to a [statsd](https://github.com/etsy/statsd/) instance!
 
 In `dropship.properties`:
 
@@ -116,5 +114,3 @@ Dropship will output:
     See the License for the specific language governing permissions and
     limitations under the License.
 
-
-[statsd]: "https://github.com/etsy/statsd/"
