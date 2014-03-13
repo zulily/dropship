@@ -18,7 +18,9 @@ package dropship;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Resources;
@@ -28,7 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -56,18 +57,22 @@ public abstract class Settings {
 
   private static final CharMatcher GAV_DELIMITER = CharMatcher.is(':');
   private static final CharMatcher ALIAS_DELIMITER = CharMatcher.is('/');
+  private static final CharMatcher OPTION_DELIMITER = CharMatcher.is('=');
   private static final String DEFAULT_CONFIG_FILE_NAME = "dropship.properties";
   private static final Splitter CSV = Splitter.on(',').trimResults().omitEmptyStrings();
   private static final Joiner GAV_JOINER = Joiner.on(':');
   private static final Splitter GAV_SPLITTER = Splitter.on(GAV_DELIMITER).trimResults().omitEmptyStrings();
   private static final Splitter ALIAS_SPLITTER = Splitter.on(ALIAS_DELIMITER).trimResults().omitEmptyStrings().limit(2);
+  private static final Splitter OPTION_SPLITTER = Splitter.on(OPTION_DELIMITER).trimResults().omitEmptyStrings().limit(2);
 
   protected final Logger logger;
   private final Properties cache = new Properties();
   private volatile boolean loaded = false;
+  private final boolean offlineMode;
 
-  protected Settings(Logger logger) {
+  protected Settings(Logger logger, boolean offlineMode) {
     this.logger = checkNotNull(logger, "logger");
+    this.offlineMode = offlineMode;
   }
 
   /**
@@ -128,7 +133,17 @@ public abstract class Settings {
 
   /** Returns true if dropship should run in offline mode. */
   public boolean offlineMode() {
-    return "true".equalsIgnoreCase(loadProperty("dropship.offline", "false"));
+    return this.offlineMode || "true".equalsIgnoreCase(loadProperty("dropship.offline", "false"));
+  }
+
+  /** Returns true if dropship should run in download mode. */
+  public boolean downloadMode() {
+    return false;
+  }
+
+  /** Returns the location that dropship should download artifacts to when running in download mode. */
+  public String localDownloadPath() {
+    return "";
   }
 
   /** Returns the optional hostname of the statsd server to use for basic metrics. */
@@ -262,6 +277,63 @@ public abstract class Settings {
     }
   }
 
+  static final class DownloadModeArguments extends Settings {
+
+    final static class DownloadOptionPresent implements Predicate<String> {
+      @Override
+      public boolean apply(String input) {
+        return Strings.nullToEmpty(input).startsWith("--download=");
+      }
+    }
+
+    private final String localDownloadDir;
+    private final Settings delegate;
+
+    // TODO : scope
+    public DownloadModeArguments(Logger logger, Settings delegate, ImmutableList<String> options) {
+      super(logger, delegate.offlineMode());
+
+      // parse --download=/some/local/path
+      List<String> downloadOption = OPTION_SPLITTER.splitToList(Iterables.tryFind(options, new DownloadOptionPresent()).or(""));
+      checkArgument(
+        downloadOption.size() == 2 && !Strings.isNullOrEmpty(downloadOption.get(1)),
+        "Must specify a local download directory"
+      );
+      this.localDownloadDir = downloadOption.get(1);
+      this.delegate = checkNotNull(delegate, "delegate");
+    }
+
+    @Override
+    String requestedArtifact() {
+      return delegate.requestedArtifact();
+    }
+
+    @Override
+    String resolveArtifact(String request) {
+      return delegate.resolveArtifact(request);
+    }
+
+    @Override
+    public String mainClassName() {
+      return delegate.mainClassName();
+    }
+
+    @Override
+    ImmutableList<String> commandLineArguments() {
+      return delegate.commandLineArguments();
+    }
+
+    @Override
+    public boolean downloadMode() {
+      return !Strings.isNullOrEmpty(this.localDownloadDir);
+    }
+
+    @Override
+    public String localDownloadPath() {
+      return this.localDownloadDir;
+    }
+  }
+
   static final class ExplicitArtifactArguments extends Settings {
 
     private final String requestedArtifact;
@@ -269,12 +341,18 @@ public abstract class Settings {
     private final Iterable<String> args;
 
     // TODO : scope
-    public ExplicitArtifactArguments(Logger logger, String[] args) {
-      super(logger);
-      checkArgument(args.length >= 2);
-      this.requestedArtifact = args[0];
-      this.mainClassName = args[1];
-      this.args = Iterables.skip(Arrays.asList(args), 2);
+    public ExplicitArtifactArguments(Logger logger, ImmutableList<String> args, boolean offline, boolean download) {
+      super(logger, offline);
+      checkArgument(!args.isEmpty(), "Must specify groupId:artifactId[:version]");
+      this.requestedArtifact = args.get(0);
+      if (download) {
+        this.mainClassName = "";
+        this.args = ImmutableList.of();
+      } else {
+        checkArgument(args.size() >= 2, "Must specify groupId:artifactId[:version] and a main class name!");
+        this.mainClassName = args.get(1);
+        this.args = Iterables.skip(args, 2);
+      }
     }
 
     @Override
@@ -304,11 +382,11 @@ public abstract class Settings {
     private final Iterable<String> args;
 
     // TODO : scope
-    public AliasArguments(Logger logger, String[] args) {
-      super(logger);
-      checkArgument(args.length >= 1);
-      this.alias = args[0];
-      this.args = Iterables.skip(Arrays.asList(args), 1);
+    public AliasArguments(Logger logger, ImmutableList<String> args, boolean offline) {
+      super(logger, offline);
+      checkArgument(args.size() >= 1);
+      this.alias = args.get(0);
+      this.args = Iterables.skip(args, 1);
     }
 
     @Override
@@ -338,7 +416,7 @@ public abstract class Settings {
       if (resolvedAlias.isPresent()) {
         return ALIAS_SPLITTER.splitToList(resolvedAlias.get()).get(1);
       } else {
-        throw new RuntimeException("Could not resolve alias \"" + alias + "\" to main class name. Make sure \"alias." + alias + "\" is configured in dropship properties.");
+        throw new RuntimeException("Could not resolve alias \"" + alias + "\" to main class name. Make sure \"alias." + alias + "\" is configured in dropship.properties.");
       }
     }
 

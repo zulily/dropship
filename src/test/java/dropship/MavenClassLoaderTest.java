@@ -15,6 +15,7 @@
  */
 package dropship;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multiset;
 import dropship.logging.Logger;
 import dropship.logging.LoggingModule;
@@ -33,7 +34,10 @@ public class MavenClassLoaderTest {
 
   @Before public void setup() {
     logger = new LoggingModule().provideTerseLogger(new SimpleDateFormat(), System.err);
-    settings = new SettingsModule().provideSettings(logger, new String[]{"joda-time:joda-time:[1.6,)", "org.joda.time.chrono.BuddhistChronology"});
+    settings = new SettingsModule().provideSettings(
+      logger,
+      ImmutableList.of("joda-time:joda-time:[1.6,)", "org.joda.time.chrono.BuddhistChronology")
+    );
   }
 
   @Test

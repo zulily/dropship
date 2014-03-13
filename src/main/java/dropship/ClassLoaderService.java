@@ -15,12 +15,13 @@
  */
 package dropship;
 
+import com.google.common.base.Optional;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.net.URLClassLoader;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 @Singleton
 final class ClassLoaderService {
@@ -36,12 +37,11 @@ final class ClassLoaderService {
     this.clBuilder = checkNotNull(clBuilder, "class loader builder");
   }
 
-  synchronized URLClassLoader getClassLoader() {
+  synchronized Optional<URLClassLoader> getClassLoader() {
     if (classLoader == null) {
       classLoader = clBuilder.forMavenCoordinates(settings.groupArtifactString());
     }
 
-    checkState(classLoader != null, "Classloader has not been created");
-    return classLoader;
+    return Optional.fromNullable(classLoader);
   }
 }

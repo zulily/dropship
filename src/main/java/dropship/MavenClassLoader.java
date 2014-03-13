@@ -19,6 +19,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import dropship.logging.Logger;
 import org.apache.maven.repository.internal.MavenRepositorySystemSession;
 import org.codehaus.plexus.DefaultPlexusContainer;
@@ -93,6 +94,20 @@ final class MavenClassLoader {
         logger.info("Resolving dependencies");
         List<Artifact> artifacts = collectDependenciesIntoArtifacts(request);
 
+        if (settings.downloadMode()) {
+          final File downloadDir = new File(settings.localDownloadPath());
+
+          if (!downloadDir.exists() && !downloadDir.mkdirs()) {
+            throw new DropshipRuntimeException("Could not create the local download directory " + settings.localDownloadPath());
+          }
+
+          for(Artifact artifact : artifacts) {
+            logger.debug("Copying " + artifact.getFile().getName() + " to " + settings.localDownloadPath());
+            Files.copy(artifact.getFile(), new File(downloadDir, artifact.getFile().getName()));
+          }
+          return null;
+        }
+
         logger.info("Building classpath for %s from %d URLs", groupArtifactVersion, artifacts.size());
         List<URL> urls = Lists.newArrayListWithExpectedSize(artifacts.size());
         for (Artifact artifact : artifacts) {
@@ -108,6 +123,8 @@ final class MavenClassLoader {
       } catch (Exception e) {
         Throwables.propagateIfInstanceOf(Throwables.getRootCause(e), VersionRangeResolutionException.class);
         Throwables.propagateIfInstanceOf(Throwables.getRootCause(e), ArtifactNotFoundException.class);
+        Throwables.propagateIfInstanceOf(e, SecurityException.class);
+        Throwables.propagateIfInstanceOf(e, DropshipRuntimeException.class);
         throw propagate(e);
       }
     }

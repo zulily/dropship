@@ -16,6 +16,7 @@
 package dropship;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
 import dagger.Module;
 import dagger.Provides;
 import dropship.logging.Logger;
@@ -46,8 +47,8 @@ final class DropshipModule {
 
   @Provides
   @Named("args")
-  String[] provideArgs() {
-    return this.args;
+  ImmutableList<String> provideArgs() {
+    return ImmutableList.copyOf(this.args);
   }
 
   @Provides

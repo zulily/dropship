@@ -15,6 +15,7 @@
  */
 package dropship;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import dagger.ObjectGraph;
 import dropship.logging.Logger;
@@ -64,18 +65,23 @@ public final class Dropship {
   private void run() throws Exception {
     logger.info("Starting Dropship v%s", settings.dropshipVersion());
 
-    URLClassLoader loader = classloaderService.getClassLoader();
+    Optional<URLClassLoader> loader = classloaderService.getClassLoader();
 
-    if (loader == null) {
+    if (!loader.isPresent()) {
+      if (settings.downloadMode())  {
+        // download mode doesn't build a classloader, exit w/ 0
+        System.exit(0);
+      }
+
       logger.warn("Could not create class loader; shutting down");
       System.exit(1);
     }
 
     logger.info("Loading main class %s", settings.mainClassName());
 
-    Class<?> mainClass = loader.loadClass(settings.mainClassName());
+    Class<?> mainClass = loader.get().loadClass(settings.mainClassName());
 
-    Thread.currentThread().setContextClassLoader(loader);
+    Thread.currentThread().setContextClassLoader(loader.get());
 
     Method mainMethod = mainClass.getMethod("main", String[].class);
 
