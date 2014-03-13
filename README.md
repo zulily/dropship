@@ -6,12 +6,18 @@ Dropship **automatically** creates a classpath containing all of your project's 
 
 You can stop building shaded jars and pushing artifacts into production. Instead, just deploy your code to a maven repo and tell Dropship which group/artifact/version you'd like to run!
 
-### Getting Started
+### Getting Started (from source)
 
 * clone this repo
 * run `mvn package` to build Dropship
 * explore the `/examples` directory to see some examples
 * try running your own applications!
+
+#### Or...
+
+* [Download v1.0](download)
+
+[download]: "http://search.maven.org/remotecontent?filepath=com/zulily/dropship/dropship/1.0/dropship-1.0.jar"
 
 ### Usage
 
