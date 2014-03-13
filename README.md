@@ -21,7 +21,9 @@ You can stop building shaded jars and pushing artifacts into production. Instead
 
     java -jar dropship.jar mygroup:myartifact[:myversion] mygroup.myartifact.Main args...
 
-If you omit the version, Dropship will automatically run the latest version of your artifact.
+If you omit the version, Dropship will automatically run the latest version of your artifact.  For the full usage, run
+
+    java -jar dropship.jar --help
 
 ### Example
 
@@ -33,6 +35,8 @@ If you omit the version, Dropship will automatically run the latest version of y
 * automatic dependency resolution
 * automatic classpath construction
 * aliases to simplify common dropship tasks
+* offline mode
+* download-only mode
 * automatic [statsd](statsd) stats for common JVM metrics (CPU, heap used, etc.)
 
 ### Configuration
@@ -69,6 +73,17 @@ Commonly used dropship group/artifact/version/main classes can be **aliased** in
 Aliases can then be used like:
 
     java -jar dropship.jar hello
+
+### Offline Mode
+
+Dropship can be run in offline mode by using the `--offline` option, or by setting `dropship.offline=true` in the `dropship.properties` file.
+When run in offline mode, Dropship will attempt to resolve all of an artifact's dependencies without contacting a remote maven repo.
+
+### Download Mode
+
+Dropship can be run in offline mode by using the `--download=<local_path>` option.  When run in download mode, Dropship will resolve all
+of an artifact's dependencies, then copy the resulting artifacts to the specified `<local_path>`.  Dropship will not attempt to build a
+classpath or run a main method when run in download mode.
 
 ### JVM Stats
 
