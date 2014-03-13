@@ -52,12 +52,12 @@ public final class Dropship {
   private final Settings settings;
   private final Logger logger;
   private final Snitch snitch;
-  private final ClassLoaderService classloaderService;
+  private final ArtifactResolutionService artifactResolutionService;
 
   @Inject
-  Dropship(Settings settings, ClassLoaderService classloaderService, Logger logger, Snitch snitch) {
+  Dropship(Settings settings, ArtifactResolutionService artifactResolutionService, Logger logger, Snitch snitch) {
     this.settings = checkNotNull(settings, "settings");
-    this.classloaderService = checkNotNull(classloaderService, "class loader service");
+    this.artifactResolutionService = checkNotNull(artifactResolutionService, "artifact resolution service");
     this.logger = checkNotNull(logger, "logger");
     this.snitch = checkNotNull(snitch, "snitch");
   }
@@ -65,14 +65,15 @@ public final class Dropship {
   private void run() throws Exception {
     logger.info("Starting Dropship v%s", settings.dropshipVersion());
 
-    Optional<URLClassLoader> loader = classloaderService.getClassLoader();
+    if (settings.downloadMode()) {
+      artifactResolutionService.downloadArtifacts();
+      // download mode doesn't build a classloader, exit w/ 0
+      System.exit(0);
+    }
 
-    if (!loader.isPresent()) {
-      if (settings.downloadMode())  {
-        // download mode doesn't build a classloader, exit w/ 0
-        System.exit(0);
-      }
+    URLClassLoader loader = artifactResolutionService.getClassLoader();
 
+   if (loader == null) {
       logger.warn("Could not create class loader; shutting down");
       System.exit(1);
     }

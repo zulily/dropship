@@ -54,9 +54,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Throwables.propagate;
 
-final class MavenClassLoader {
+final class MavenArtifactResolution {
 
-  static class ClassLoaderBuilder {
+  static class ArtifactResolutionBuilder {
 
     private static final String COMPILE_SCOPE = "compile";
     private static final ClassLoader SHARE_NOTHING = null;
@@ -66,7 +66,7 @@ final class MavenClassLoader {
     private final List<RemoteRepository> repositories;
     private final File localRepositoryDirectory;
 
-    private ClassLoaderBuilder(Settings settings, Logger logger, RemoteRepository... repositories) {
+    private ArtifactResolutionBuilder(Settings settings, Logger logger, RemoteRepository... repositories) {
       this.settings = checkNotNull(settings, "settings");
       this.logger = checkNotNull(logger, "logger");
       checkNotNull(repositories, "repositories");
@@ -76,10 +76,14 @@ final class MavenClassLoader {
       this.localRepositoryDirectory = new File(settings.localRepoPath());
     }
 
-    public URLClassLoader forMavenCoordinates(String groupArtifactVersion) {
+    /**
+     * Downloads all artifacts for resolved dependencies to a directory specified in the {@link dropship.Settings}.
+     * @param gav the group:artifact:version to resolve against, i.e. joda-time:joda-time:1.6.2
+     */
+    public void downloadArtifacts(String gav) {
       try {
-        CollectRequest collectRequest = createCollectRequestForGAV(groupArtifactVersion);
-        return this.forMavenCoordinates(groupArtifactVersion, collectRequest);
+        CollectRequest collectRequest = createCollectRequestForGAV(gav);
+        downloadArtifacts(collectRequest);
       } catch (ArtifactNotFoundException e) {
         throw new DropshipRuntimeException(e.getMessage());
       } catch (VersionRangeResolutionException e) {
@@ -87,7 +91,44 @@ final class MavenClassLoader {
       }
     }
 
-    private URLClassLoader forMavenCoordinates(String groupArtifactVersion, CollectRequest request)
+    private void downloadArtifacts(CollectRequest request)
+      throws VersionRangeResolutionException, ArtifactNotFoundException {
+      try {
+        logger.info("Resolving dependencies");
+        List<Artifact> artifacts = collectDependenciesIntoArtifacts(request);
+
+        final File downloadDir = new File(settings.localDownloadPath());
+
+        if (!downloadDir.exists() && !downloadDir.mkdirs()) {
+          throw new DropshipRuntimeException("Could not create the local download directory " + settings.localDownloadPath());
+        }
+
+        for (Artifact artifact : artifacts) {
+          logger.debug("Copying " + artifact.getFile().getName() + " to " + settings.localDownloadPath());
+          Files.copy(artifact.getFile(), new File(downloadDir, artifact.getFile().getName()));
+        }
+
+      } catch (Exception e) {
+        Throwables.propagateIfInstanceOf(Throwables.getRootCause(e), VersionRangeResolutionException.class);
+        Throwables.propagateIfInstanceOf(Throwables.getRootCause(e), ArtifactNotFoundException.class);
+        Throwables.propagateIfInstanceOf(e, SecurityException.class);
+        Throwables.propagateIfInstanceOf(e, DropshipRuntimeException.class);
+        throw propagate(e);
+      }
+    }
+
+    public URLClassLoader createClassLoader(String groupArtifactVersion) {
+      try {
+        CollectRequest collectRequest = createCollectRequestForGAV(groupArtifactVersion);
+        return this.createClassLoader(groupArtifactVersion, collectRequest);
+      } catch (ArtifactNotFoundException e) {
+        throw new DropshipRuntimeException(e.getMessage());
+      } catch (VersionRangeResolutionException e) {
+        throw new DropshipRuntimeException(e.getMessage());
+      }
+    }
+
+    private URLClassLoader createClassLoader(String groupArtifactVersion, CollectRequest request)
       throws VersionRangeResolutionException, ArtifactNotFoundException {
 
       try {
@@ -192,18 +233,18 @@ final class MavenClassLoader {
    * @param gav artifact group:artifact:version, i.e. joda-time:joda-time:1.6.2
    * @return a classloader that can be used to load classes from the given artifact
    */
-  static URLClassLoader forMavenCoordinates(Settings settings, Logger logger, String gav) {
-    return usingCentralRepo(settings, logger).forMavenCoordinates(checkNotNull(gav));
+  static URLClassLoader createClassLoader(Settings settings, Logger logger, String gav) {
+    return usingCentralRepo(settings, logger).createClassLoader(checkNotNull(gav));
   }
 
-  static ClassLoaderBuilder using(Settings settings, Logger logger, String url) {
+  static ArtifactResolutionBuilder using(Settings settings, Logger logger, String url) {
     RemoteRepository custom = new RemoteRepository("custom", "default", url);
-    return new ClassLoaderBuilder(settings, logger, custom);
+    return new ArtifactResolutionBuilder(settings, logger, custom);
   }
 
-  static ClassLoaderBuilder usingCentralRepo(Settings settings, Logger logger) {
+  static ArtifactResolutionBuilder usingCentralRepo(Settings settings, Logger logger) {
     RemoteRepository central = new RemoteRepository("central", "default", "http://repo1.maven.org/maven2/");
-    return new ClassLoaderBuilder(settings, logger, central);
+    return new ArtifactResolutionBuilder(settings, logger, central);
   }
 
 }

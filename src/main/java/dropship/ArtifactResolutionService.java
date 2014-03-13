@@ -24,24 +24,29 @@ import java.net.URLClassLoader;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 @Singleton
-final class ClassLoaderService {
+final class ArtifactResolutionService {
 
   private final Settings settings;
-  private final MavenClassLoader.ClassLoaderBuilder clBuilder;
+  private final MavenArtifactResolution.ArtifactResolutionBuilder clBuilder;
 
   private URLClassLoader classLoader = null;
 
   @Inject
-  ClassLoaderService(Settings settings, MavenClassLoader.ClassLoaderBuilder clBuilder) {
+  ArtifactResolutionService(Settings settings, MavenArtifactResolution.ArtifactResolutionBuilder clBuilder) {
     this.settings = checkNotNull(settings, "settings");
     this.clBuilder = checkNotNull(clBuilder, "class loader builder");
   }
 
   synchronized Optional<URLClassLoader> getClassLoader() {
     if (classLoader == null) {
-      classLoader = clBuilder.forMavenCoordinates(settings.groupArtifactString());
+      classLoader = clBuilder.createClassLoader(settings.groupArtifactString());
     }
 
-    return Optional.fromNullable(classLoader);
+    checkState(classLoader != null, "ClassLoader has not been created");
+    return classLoader;
+  }
+
+  synchronized void downloadArtifacts() {
+    clBuilder.downloadArtifacts(settings.groupArtifactString());
   }
 }

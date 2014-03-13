@@ -66,6 +66,7 @@ public abstract class Settings {
   private static final Splitter OPTION_SPLITTER = Splitter.on(OPTION_DELIMITER).trimResults().omitEmptyStrings().limit(2);
 
   protected final Logger logger;
+  private final boolean offlineMode;
   private final Properties cache = new Properties();
   private volatile boolean loaded = false;
   private final boolean offlineMode;

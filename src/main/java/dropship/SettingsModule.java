@@ -66,17 +66,10 @@ class SettingsModule {
       "java -jar dropship.jar --offline --download=/tmp/dir/ mygroup:myartifact";
   }
 
-  private final class HelpOptionPresent implements Predicate<String> {
-    @Override
-    public boolean apply(String input) {
-      return "--help".equalsIgnoreCase(input);
-    }
-  }
-
   private final class OfflineOptionPresent implements Predicate<String> {
     @Override
     public boolean apply(String input) {
-      return "--offline".equalsIgnoreCase(input);
+      return "--offline".equals(input);
     }
   }
 
@@ -92,7 +85,7 @@ class SettingsModule {
   Settings provideSettings(Logger logger, @Named("args") ImmutableList<String> args) {
     checkNotNull(args, "args");
 
-    if (args.size() == 0 || Iterables.any(args, new HelpOptionPresent())) {
+    if (args.size() == 0 || args.contains("--help")) {
       System.out.println(usage);
       System.exit(args.size() == 0 ? 1 : 0);
     }

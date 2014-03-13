@@ -27,7 +27,7 @@ import java.text.SimpleDateFormat;
 
 import static org.fest.assertions.Assertions.assertThat;
 
-public class MavenClassLoaderTest {
+public class MavenArtifactResolutionTest {
 
   private Settings settings;
   private Logger logger;
@@ -44,7 +44,7 @@ public class MavenClassLoaderTest {
   public void jodaTime() throws Exception {
     String gav = "joda-time:joda-time:[1.6,)";
     String className = "org.joda.time.chrono.BuddhistChronology";
-    ClassLoader loader = MavenClassLoader.forMavenCoordinates(settings, logger, gav);
+    ClassLoader loader = MavenArtifactResolution.createClassLoader(settings, logger, gav);
     assertThat(loader).isNotNull();
     Class<?> buddhistChronology = loader.loadClass(className);
     assertThat(buddhistChronology).isNotNull();
@@ -57,7 +57,7 @@ public class MavenClassLoaderTest {
     // This test verifies that, although we have access to certain classes in THIS classloader in THIS thread,
     // the classloader loaded by maven GAV does NOT.
     String gav = "joda-time:joda-time:[1.6,)";
-    ClassLoader loader = MavenClassLoader.forMavenCoordinates(settings, logger, gav);
+    ClassLoader loader = MavenArtifactResolution.createClassLoader(settings, logger, gav);
     assertThat(loader).isNotNull();
     assertThat(Thread.currentThread().getContextClassLoader().loadClass(Multiset.class.getName())).isNotNull();
     loader.loadClass(Multiset.class.getName());
@@ -72,7 +72,7 @@ public class MavenClassLoaderTest {
     try {
       String gav = "joda-time:joda-time:[1.6,)";
       String className = "org.joda.time.chrono.BuddhistChronology";
-      ClassLoader loader = MavenClassLoader.forMavenCoordinates(settings, logger, gav);
+      ClassLoader loader = MavenArtifactResolution.createClassLoader(settings, logger, gav);
       Thread.currentThread().setContextClassLoader(loader);
       loader = Thread.currentThread().getContextClassLoader();
       assertThat(loader).isNotNull();
@@ -87,6 +87,6 @@ public class MavenClassLoaderTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void classLoaderConstructionFailsOnBogusGAV() {
-    MavenClassLoader.forMavenCoordinates(settings, logger, "this isn't going to work!");
+    MavenArtifactResolution.createClassLoader(settings, logger, "this isn't going to work!");
   }
 }

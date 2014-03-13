@@ -39,16 +39,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
   })
 final class DropshipModule {
 
-  private final String[] args;
+  private final ImmutableList<String> args;
 
   DropshipModule(String[] args) {
-    this.args = checkNotNull(args, "args");
+    this.args = ImmutableList.copyOf(checkNotNull(args, "args"));
   }
 
   @Provides
   @Named("args")
   ImmutableList<String> provideArgs() {
-    return ImmutableList.copyOf(this.args);
+    return args;
   }
 
   @Provides
@@ -68,14 +68,14 @@ final class DropshipModule {
   }
 
   @Provides
-  MavenClassLoader.ClassLoaderBuilder provideClassloaderBuilder(Settings settings, Logger logger) {
+  MavenArtifactResolution.ArtifactResolutionBuilder provideArtifactResolutionBuilder(Settings settings, Logger logger) {
     Optional<String> override = settings.mavenRepoUrl();
     if (override.isPresent()) {
       logger.info("Will load artifacts from %s", override);
-      return MavenClassLoader.using(settings, logger, override.get());
+      return MavenArtifactResolution.using(settings, logger, override.get());
     } else {
       logger.info("Loading artifacts from maven central repo");
-      return MavenClassLoader.usingCentralRepo(settings, logger);
+      return MavenArtifactResolution.usingCentralRepo(settings, logger);
     }
   }
 
