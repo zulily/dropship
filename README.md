@@ -81,7 +81,7 @@ When run in offline mode, Dropship will attempt to resolve all of an artifact's 
 
 ### Download Mode
 
-Dropship can be run in offline mode by using the `--download=<local_path>` option.  When run in download mode, Dropship will resolve all
+Dropship can be run in download mode by using the `--download=<local_path>` option.  When run in download mode, Dropship will resolve all
 of an artifact's dependencies, then copy the resulting artifacts to the specified `<local_path>`.  Dropship will not attempt to build a
 classpath or run a main method when run in download mode.
 
