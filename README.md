@@ -15,7 +15,7 @@ You can stop building shaded jars and pushing artifacts into production. Instead
 
 #### Or...
 
-* [Download v1.0](http://search.maven.org/remotecontent?filepath=com/zulily/dropship/dropship/1.0/dropship-1.0.jar)
+* [Download v1.0](http://repo1.maven.org/maven2/com/zulily/dropship/dropship/1.0/dropship-1.0.jar)
 
 ### Usage
 
