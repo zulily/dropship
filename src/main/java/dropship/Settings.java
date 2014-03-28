@@ -69,7 +69,6 @@ public abstract class Settings {
   private final boolean offlineMode;
   private final Properties cache = new Properties();
   private volatile boolean loaded = false;
-  private final boolean offlineMode;
 
   protected Settings(Logger logger, boolean offlineMode) {
     this.logger = checkNotNull(logger, "logger");

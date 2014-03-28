@@ -15,7 +15,6 @@
  */
 package dropship;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import dagger.ObjectGraph;
 import dropship.logging.Logger;
@@ -80,9 +79,9 @@ public final class Dropship {
 
     logger.info("Loading main class %s", settings.mainClassName());
 
-    Class<?> mainClass = loader.get().loadClass(settings.mainClassName());
+    Class<?> mainClass = loader.loadClass(settings.mainClassName());
 
-    Thread.currentThread().setContextClassLoader(loader.get());
+    Thread.currentThread().setContextClassLoader(loader);
 
     Method mainMethod = mainClass.getMethod("main", String[].class);
 

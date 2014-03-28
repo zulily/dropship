@@ -15,13 +15,12 @@
  */
 package dropship;
 
-import com.google.common.base.Optional;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.net.URLClassLoader;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 @Singleton
 final class ArtifactResolutionService {
@@ -37,7 +36,7 @@ final class ArtifactResolutionService {
     this.clBuilder = checkNotNull(clBuilder, "class loader builder");
   }
 
-  synchronized Optional<URLClassLoader> getClassLoader() {
+  synchronized URLClassLoader getClassLoader() {
     if (classLoader == null) {
       classLoader = clBuilder.createClassLoader(settings.groupArtifactString());
     }

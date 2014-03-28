@@ -104,7 +104,7 @@ final class MavenArtifactResolution {
         }
 
         for (Artifact artifact : artifacts) {
-          logger.debug("Copying " + artifact.getFile().getName() + " to " + settings.localDownloadPath());
+          logger.info("Copying " + artifact.getFile().getName() + " to " + settings.localDownloadPath());
           Files.copy(artifact.getFile(), new File(downloadDir, artifact.getFile().getName()));
         }
 
@@ -134,20 +134,6 @@ final class MavenArtifactResolution {
       try {
         logger.info("Resolving dependencies");
         List<Artifact> artifacts = collectDependenciesIntoArtifacts(request);
-
-        if (settings.downloadMode()) {
-          final File downloadDir = new File(settings.localDownloadPath());
-
-          if (!downloadDir.exists() && !downloadDir.mkdirs()) {
-            throw new DropshipRuntimeException("Could not create the local download directory " + settings.localDownloadPath());
-          }
-
-          for(Artifact artifact : artifacts) {
-            logger.debug("Copying " + artifact.getFile().getName() + " to " + settings.localDownloadPath());
-            Files.copy(artifact.getFile(), new File(downloadDir, artifact.getFile().getName()));
-          }
-          return null;
-        }
 
         logger.info("Building classpath for %s from %d URLs", groupArtifactVersion, artifacts.size());
         List<URL> urls = Lists.newArrayListWithExpectedSize(artifacts.size());
