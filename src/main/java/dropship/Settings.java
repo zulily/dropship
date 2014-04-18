@@ -171,6 +171,12 @@ public abstract class Settings {
     }
   }
 
+  public final Properties asProperties() {
+    Properties properties = new Properties(System.getProperties());
+    properties.putAll(loadBootstrapPropertiesUnchecked());
+    return properties;
+  }
+
   String loadProperty(String name, String defaultValue) {
     checkNotNull(defaultValue);
 

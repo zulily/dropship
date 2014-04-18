@@ -23,6 +23,7 @@ import dropship.snitch.Snitch;
 import javax.inject.Inject;
 import java.lang.reflect.Method;
 import java.net.URLClassLoader;
+import java.util.Properties;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -77,20 +78,64 @@ public final class Dropship {
       System.exit(1);
     }
 
+    setupThreadDefaults(loader);
+    setupExitHook();
+
     logger.info("Loading main class %s", settings.mainClassName());
 
     Class<?> mainClass = loader.loadClass(settings.mainClassName());
 
-    Thread.currentThread().setContextClassLoader(loader);
-
     Method mainMethod = mainClass.getMethod("main", String[].class);
-
-    logger.info("Invoking main method of %s", mainClass.getName());
-
-    System.setProperty("dropship.running", "true");
 
     snitch.start();
 
-    mainMethod.invoke(null, (Object) Iterables.toArray(settings.commandLineArguments(), String.class));
+    try {
+      String[] args = Iterables.toArray(settings.commandLineArguments(), String.class);
+      preRun(settings.asProperties(), settings.groupArtifactString(), mainClass, mainMethod, args);
+
+      logger.info("Invoking main method of %s", mainClass.getName());
+      System.setProperty("dropship.running", "true");
+      mainMethod.invoke(null, (Object) args);
+    } catch (Exception e) {
+      onError(e);
+    }
+  }
+
+  private void setupThreadDefaults(ClassLoader loader) {
+    Thread.currentThread().setContextClassLoader(loader);
+    Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+      @Override
+      public void uncaughtException(Thread t, Throwable e) {
+        onError(e);
+      }
+    });
+  }
+
+  private void setupExitHook() {
+    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+      @Override
+      public void run() {
+        onExit();
+      }
+    }));
+  }
+
+  private void preRun(Properties properties,
+                      String groupArtifactString,
+                      Class<?> mainClass,
+                      Method mainMethod,
+                      Object[] arguments) {
+
+    // Here for agents
+  }
+
+  private void onError(Throwable e) {
+
+    // Here for agents
+  }
+
+  private void onExit() {
+
+    // Here for agents
   }
 }
