@@ -21,7 +21,6 @@ import dagger.Module;
 import dagger.Provides;
 import dropship.logging.Logger;
 import dropship.logging.LoggingModule;
-import dropship.snitch.SnitchModule;
 
 import javax.inject.Named;
 import java.io.PrintStream;
@@ -34,8 +33,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
   injects = Dropship.class,
   includes = {
     SettingsModule.class,
-    LoggingModule.class,
-    SnitchModule.class
+    LoggingModule.class
   })
 final class DropshipModule {
 

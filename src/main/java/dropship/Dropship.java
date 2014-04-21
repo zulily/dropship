@@ -18,7 +18,6 @@ package dropship;
 import com.google.common.collect.Iterables;
 import dagger.ObjectGraph;
 import dropship.logging.Logger;
-import dropship.snitch.Snitch;
 
 import javax.inject.Inject;
 import java.lang.reflect.Method;
@@ -51,15 +50,13 @@ public final class Dropship {
 
   private final Settings settings;
   private final Logger logger;
-  private final Snitch snitch;
   private final ArtifactResolutionService artifactResolutionService;
 
   @Inject
-  Dropship(Settings settings, ArtifactResolutionService artifactResolutionService, Logger logger, Snitch snitch) {
+  Dropship(Settings settings, ArtifactResolutionService artifactResolutionService, Logger logger) {
     this.settings = checkNotNull(settings, "settings");
     this.artifactResolutionService = checkNotNull(artifactResolutionService, "artifact resolution service");
     this.logger = checkNotNull(logger, "logger");
-    this.snitch = checkNotNull(snitch, "snitch");
   }
 
   private void run() throws Exception {
@@ -86,8 +83,6 @@ public final class Dropship {
     Class<?> mainClass = loader.loadClass(settings.mainClassName());
 
     Method mainMethod = mainClass.getMethod("main", String[].class);
-
-    snitch.start();
 
     try {
       String[] args = Iterables.toArray(settings.commandLineArguments(), String.class);
