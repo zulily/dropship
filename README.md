@@ -37,7 +37,6 @@ If you omit the version, Dropship will automatically run the latest version of y
 * aliases to simplify common dropship tasks
 * offline mode
 * download-only mode
-* automatic [statsd](statsd) stats for common JVM metrics (CPU, heap used, etc.)
 
 ### Configuration
 
@@ -87,32 +86,7 @@ classpath or run a main method when run in download mode.
 
 ### JVM Stats
 
-As if that wasn't enough, Dropship can also output JVM metrics for any process it runs to a [statsd](https://github.com/etsy/statsd/) instance!
-
-In `dropship.properties`:
-
-    statsd.host = statsdhost.foobar.com
-    statsd.port = 8125
-
-    # optional (defaults to 1.0, or 100%)
-    statsd.sample-rate = 0.5
-
-If a valid statsd hostname/port are found, Dropship will output stats to statsd in the form:
-`dropship.hostname.group.artifact.mainclass.statname`
-
-Dropship will output:
-
-* heap memory used
-* CPU ms
-* uptime ms
-* disk free
-* thread counts
-* number of classes loaded
-* GC stats
-* **and more**
-
-![dropship stats](https://github.com/zulily/dropship/raw/master/stats.png)
-![more dropship stats](https://github.com/zulily/dropship/raw/master/more_stats.png)
+The statsd functionality present in 1.0 and 1.1 has been moved to [dropship-statsd-agent](https://github.com/zulily/dropship-statsd-agent/).
 
 ## License
 
