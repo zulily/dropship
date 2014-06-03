@@ -98,10 +98,16 @@ public final class Dropship {
 
   private void setupThreadDefaults(ClassLoader loader) {
     Thread.currentThread().setContextClassLoader(loader);
+    final Thread.UncaughtExceptionHandler priorHandler = Thread.getDefaultUncaughtExceptionHandler();
     Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
       @Override
       public void uncaughtException(Thread t, Throwable e) {
         onError(e);
+        if (priorHandler != null) {
+          priorHandler.uncaughtException(t, e);
+        } else {
+          e.printStackTrace();
+        }
       }
     });
   }
