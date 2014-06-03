@@ -57,18 +57,6 @@ class SettingsModule {
       "java -jar dropship.jar --offline --download=/tmp/dir/ mygroup:myartifact";
   }
 
-  private final class OfflineOptionPresent {
-    public boolean apply(String input) {
-      return "--offline".equals(input);
-    }
-  }
-
-  private final class IsOption {
-    public boolean apply(String input) {
-      return input != null && input.startsWith("--");
-    }
-  }
-
   Settings provideSettings(Logger logger, List<String> args) {
     checkNotNull(args, "args");
 

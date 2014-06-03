@@ -92,6 +92,7 @@ final class MavenArtifactResolution {
       }
     }
 
+    @SuppressWarnings("ConstantConditions")
     private void downloadArtifacts(CollectRequest request)
       throws VersionRangeResolutionException, ArtifactNotFoundException {
       try {
@@ -167,6 +168,7 @@ final class MavenArtifactResolution {
       }
     }
 
+    @SuppressWarnings("ConstantConditions")
     private URLClassLoader createClassLoader(String groupArtifactVersion, CollectRequest request)
       throws VersionRangeResolutionException, ArtifactNotFoundException {
 

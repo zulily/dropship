@@ -106,18 +106,6 @@ public abstract class Logger {
     write(" WARN", message);
   }
 
-  /**
-   * Writes the given string as a warning to the log and prints
-   * the exception stack trace.
-   *
-   * @param e exception to log
-   * @param message message to write
-   */
-  public final void warn(Throwable e, String message) {
-    warn(message);
-    e.printStackTrace(destination());
-  }
-
   private synchronized void write(String level, String line) {
     final long tid = Thread.currentThread().getId();
     destination().println(format(new Date(System.currentTimeMillis()), tid, level, line));
