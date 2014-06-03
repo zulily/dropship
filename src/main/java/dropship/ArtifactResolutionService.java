@@ -15,14 +15,11 @@
  */
 package dropship;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.net.URLClassLoader;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
+import static dropship.Preconditions.checkNotNull;
+import static dropship.Preconditions.checkState;
 
-@Singleton
 final class ArtifactResolutionService {
 
   private final Settings settings;
@@ -30,7 +27,6 @@ final class ArtifactResolutionService {
 
   private URLClassLoader classLoader = null;
 
-  @Inject
   ArtifactResolutionService(Settings settings, MavenArtifactResolution.ArtifactResolutionBuilder clBuilder) {
     this.settings = checkNotNull(settings, "settings");
     this.clBuilder = checkNotNull(clBuilder, "class loader builder");

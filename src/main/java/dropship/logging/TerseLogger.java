@@ -17,22 +17,17 @@ package dropship.logging;
 
 import org.sonatype.aether.AbstractRepositoryListener;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static dropship.Preconditions.checkNotNull;
 
-
-@Singleton
 final class TerseLogger extends Logger {
 
   private final SimpleDateFormat dateFormat;
   private final PrintStream destination;
 
-  @Inject
   TerseLogger(SimpleDateFormat dateFormat,
               PrintStream destination) {
 

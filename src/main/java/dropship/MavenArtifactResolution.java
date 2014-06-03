@@ -15,11 +15,6 @@
  */
 package dropship;
 
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 import dropship.logging.Logger;
 import org.apache.maven.repository.internal.MavenRepositorySystemSession;
 import org.codehaus.plexus.DefaultPlexusContainer;
@@ -46,13 +41,18 @@ import org.sonatype.aether.util.filter.ScopeDependencyFilter;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Throwables.propagate;
+import static dropship.Preconditions.checkArgument;
+import static dropship.Preconditions.checkNotNull;
 
 final class MavenArtifactResolution {
 
@@ -72,12 +72,13 @@ final class MavenArtifactResolution {
       checkNotNull(repositories, "repositories");
       checkArgument(repositories.length > 0, "Must specify at least one remote repository.");
 
-      this.repositories = ImmutableList.copyOf(repositories);
+      this.repositories = Arrays.asList(repositories);
       this.localRepositoryDirectory = new File(settings.localRepoPath());
     }
 
     /**
      * Downloads all artifacts for resolved dependencies to a directory specified in the {@link dropship.Settings}.
+     *
      * @param gav the group:artifact:version to resolve against, i.e. joda-time:joda-time:1.6.2
      */
     public void downloadArtifacts(String gav) {
@@ -105,15 +106,53 @@ final class MavenArtifactResolution {
 
         for (Artifact artifact : artifacts) {
           logger.info("Copying " + artifact.getFile().getName() + " to " + settings.localDownloadPath());
-          Files.copy(artifact.getFile(), new File(downloadDir, artifact.getFile().getName()));
+          copy(artifact.getFile(), new File(downloadDir, artifact.getFile().getName()));
         }
 
       } catch (Exception e) {
-        Throwables.propagateIfInstanceOf(Throwables.getRootCause(e), VersionRangeResolutionException.class);
-        Throwables.propagateIfInstanceOf(Throwables.getRootCause(e), ArtifactNotFoundException.class);
-        Throwables.propagateIfInstanceOf(e, SecurityException.class);
-        Throwables.propagateIfInstanceOf(e, DropshipRuntimeException.class);
-        throw propagate(e);
+        Throwable rootCause = e;
+        while (rootCause.getCause() != null) {
+          rootCause = rootCause.getCause();
+        }
+        if (rootCause instanceof VersionRangeResolutionException) {
+          throw ((VersionRangeResolutionException) rootCause);
+        }
+        if (rootCause instanceof ArtifactNotFoundException) {
+          throw ((ArtifactNotFoundException) rootCause);
+        }
+        if (e instanceof SecurityException) {
+          throw ((SecurityException) e);
+        }
+        if (e instanceof DropshipRuntimeException) {
+          throw ((DropshipRuntimeException) e);
+        }
+        if (e instanceof RuntimeException) {
+          throw ((RuntimeException) e);
+        }
+        throw new RuntimeException(e);
+      }
+    }
+
+    private void copy(File source, File destination) throws IOException {
+      if (!destination.exists()) {
+        if (!destination.createNewFile()) {
+          throw new RuntimeException("Could not create destination file: " + destination.getAbsolutePath());
+        }
+      }
+
+      FileChannel sourceChannel = null;
+      FileChannel destinationChannel = null;
+      try {
+        sourceChannel = new FileInputStream(source).getChannel();
+        destinationChannel = new FileOutputStream(destination).getChannel();
+        destinationChannel.transferFrom(sourceChannel, 0, sourceChannel.size());
+      } finally {
+        if (sourceChannel != null) {
+          sourceChannel.close();
+        }
+        if (destinationChannel != null) {
+          destinationChannel.close();
+        }
       }
     }
 
@@ -136,7 +175,7 @@ final class MavenArtifactResolution {
         List<Artifact> artifacts = collectDependenciesIntoArtifacts(request);
 
         logger.info("Building classpath for %s from %d URLs", groupArtifactVersion, artifacts.size());
-        List<URL> urls = Lists.newArrayListWithExpectedSize(artifacts.size());
+        List<URL> urls = new ArrayList<URL>();
         for (Artifact artifact : artifacts) {
           urls.add(artifact.getFile().toURI().toURL());
         }
@@ -146,13 +185,28 @@ final class MavenArtifactResolution {
           urls.add(new File(path).toURI().toURL());
         }
 
-        return new URLClassLoader(Iterables.toArray(urls, URL.class), SHARE_NOTHING);
+        return new URLClassLoader(urls.toArray(new URL[urls.size()]), SHARE_NOTHING);
       } catch (Exception e) {
-        Throwables.propagateIfInstanceOf(Throwables.getRootCause(e), VersionRangeResolutionException.class);
-        Throwables.propagateIfInstanceOf(Throwables.getRootCause(e), ArtifactNotFoundException.class);
-        Throwables.propagateIfInstanceOf(e, SecurityException.class);
-        Throwables.propagateIfInstanceOf(e, DropshipRuntimeException.class);
-        throw propagate(e);
+        Throwable rootCause = e;
+        while (rootCause.getCause() != null) {
+          rootCause = rootCause.getCause();
+        }
+        if (rootCause instanceof VersionRangeResolutionException) {
+          throw ((VersionRangeResolutionException) rootCause);
+        }
+        if (rootCause instanceof ArtifactNotFoundException) {
+          throw ((ArtifactNotFoundException) rootCause);
+        }
+        if (e instanceof SecurityException) {
+          throw ((SecurityException) e);
+        }
+        if (e instanceof DropshipRuntimeException) {
+          throw ((DropshipRuntimeException) e);
+        }
+        if (e instanceof RuntimeException) {
+          throw ((RuntimeException) e);
+        }
+        throw new RuntimeException(e);
       }
     }
 

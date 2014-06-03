@@ -15,62 +15,46 @@
  */
 package dropship;
 
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-import dagger.Module;
-import dagger.Provides;
 import dropship.logging.Logger;
-import dropship.logging.LoggingModule;
 
-import javax.inject.Named;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static dropship.Preconditions.checkNotNull;
 
-@Module(
-  injects = Dropship.class,
-  includes = {
-    SettingsModule.class,
-    LoggingModule.class
-  })
 final class DropshipModule {
 
-  private final ImmutableList<String> args;
+  private final List<String> args;
 
   DropshipModule(String[] args) {
-    this.args = ImmutableList.copyOf(checkNotNull(args, "args"));
+    checkNotNull(args, "args");
+    this.args = Arrays.asList(args);
   }
 
-  @Provides
-  @Named("args")
-  ImmutableList<String> provideArgs() {
+  List<String> provideArgs() {
     return args;
   }
 
-  @Provides
-  @Named("jvm-name")
   String provideJvmName() {
     return ManagementFactory.getRuntimeMXBean().getName();
   }
 
-  @Provides
   SimpleDateFormat provideDateFormat() {
     return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ");
   }
 
-  @Provides
   PrintStream provideLoggerDestination() {
     return System.err;
   }
 
-  @Provides
   MavenArtifactResolution.ArtifactResolutionBuilder provideArtifactResolutionBuilder(Settings settings, Logger logger) {
-    Optional<String> override = settings.mavenRepoUrl();
-    if (override.isPresent()) {
+    String override = settings.mavenRepoUrl();
+    if (override != null) {
       logger.info("Will load artifacts from %s", override);
-      return MavenArtifactResolution.using(settings, logger, override.get());
+      return MavenArtifactResolution.using(settings, logger, override);
     } else {
       logger.info("Loading artifacts from maven central repo");
       return MavenArtifactResolution.usingCentralRepo(settings, logger);

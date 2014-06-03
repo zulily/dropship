@@ -20,7 +20,7 @@ import org.sonatype.aether.AbstractRepositoryListener;
 import java.io.PrintStream;
 import java.util.Date;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static dropship.Preconditions.checkNotNull;
 
 /**
  * Dropship logger, which wraps a {@link java.io.PrintStream} in lieu of

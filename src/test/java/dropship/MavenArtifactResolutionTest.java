@@ -15,15 +15,15 @@
  */
 package dropship;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Multiset;
 import dropship.logging.Logger;
 import dropship.logging.LoggingModule;
 import org.junit.Before;
 import org.junit.Test;
+import org.sonatype.aether.util.artifact.DefaultArtifact;
 
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 
 import static org.fest.assertions.Assertions.assertThat;
 
@@ -33,10 +33,10 @@ public class MavenArtifactResolutionTest {
   private Logger logger;
 
   @Before public void setup() {
-    logger = new LoggingModule().provideTerseLogger(new SimpleDateFormat(), System.err);
+    logger = new LoggingModule().provideLogger(new SimpleDateFormat(), "myvm", System.err);
     settings = new SettingsModule().provideSettings(
       logger,
-      ImmutableList.of("joda-time:joda-time:[1.6,)", "org.joda.time.chrono.BuddhistChronology")
+      Arrays.asList("joda-time:joda-time:[1.6,)", "org.joda.time.chrono.BuddhistChronology")
     );
   }
 
@@ -53,14 +53,14 @@ public class MavenArtifactResolutionTest {
   }
 
   @Test(expected = ClassNotFoundException.class)
-  public void jodaTimeClassLoaderDoesNotHaveMultiset() throws ClassNotFoundException {
+  public void jodaTimeClassLoaderDoesNotHaveDefaultArtifact() throws ClassNotFoundException {
     // This test verifies that, although we have access to certain classes in THIS classloader in THIS thread,
     // the classloader loaded by maven GAV does NOT.
     String gav = "joda-time:joda-time:[1.6,)";
     ClassLoader loader = MavenArtifactResolution.createClassLoader(settings, logger, gav);
     assertThat(loader).isNotNull();
-    assertThat(Thread.currentThread().getContextClassLoader().loadClass(Multiset.class.getName())).isNotNull();
-    loader.loadClass(Multiset.class.getName());
+    assertThat(Thread.currentThread().getContextClassLoader().loadClass(DefaultArtifact.class.getName())).isNotNull();
+    loader.loadClass(DefaultArtifact.class.getName());
   }
 
   @Test

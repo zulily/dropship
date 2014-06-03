@@ -15,20 +15,19 @@
  */
 package dropship.logging;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Maps;
 import org.sonatype.aether.AbstractRepositoryListener;
 import org.sonatype.aether.RepositoryEvent;
 import org.sonatype.aether.artifact.Artifact;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static dropship.Preconditions.checkNotNull;
 
 class LoggingRepositoryListener extends AbstractRepositoryListener {
 
-  private final Map<String, Long> startTimes = Maps.newHashMap();
+  private final Map<String, Long> startTimes = new HashMap<String, Long>();
   private final Logger logger;
 
   LoggingRepositoryListener(Logger logger) {
@@ -36,7 +35,7 @@ class LoggingRepositoryListener extends AbstractRepositoryListener {
   }
 
   private String artifactAsString(Artifact artifact) {
-    return Joiner.on(':').join(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion());
+    return artifact.getGroupId() + ':' + artifact.getArtifactId() + ':' + artifact.getVersion();
   }
 
   /**

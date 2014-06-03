@@ -17,16 +17,12 @@ package dropship.logging;
 
 import org.sonatype.aether.AbstractRepositoryListener;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static dropship.Preconditions.checkNotNull;
 
-@Singleton
 final class VerboseLogger extends Logger {
 
   private final LoggingRepositoryListener listener;
@@ -34,10 +30,8 @@ final class VerboseLogger extends Logger {
   private final String jvmName;
   private final PrintStream destination;
 
-
-  @Inject
   VerboseLogger(SimpleDateFormat dateFormat,
-                @Named("jvm-name") String jvmName,
+                String jvmName,
                 PrintStream destination) {
 
     this.listener = new LoggingRepositoryListener(this);

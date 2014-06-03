@@ -38,9 +38,6 @@
     <aether.version>1.13.1</aether.version>
     <maven.version>3.0.5</maven.version>
     <wagon.version>2.6</wagon.version>
-    <guava.version>16.0.1</guava.version>
-    <javax.inject.version>1</javax.inject.version>
-    <dagger.version>1.1.0</dagger.version>
     <junit.version>4.11</junit.version>
     <fest.version>1.4</fest.version>
   </properties>
@@ -70,27 +67,6 @@
   </organization>
 
   <dependencies>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>${guava.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>javax.inject</groupId>
-      <artifactId>javax.inject</artifactId>
-      <version>${javax.inject.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.squareup.dagger</groupId>
-      <artifactId>dagger</artifactId>
-      <version>${dagger.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.squareup.dagger</groupId>
-      <artifactId>dagger-compiler</artifactId>
-      <version>${dagger.version}</version>
-      <optional>true</optional>
-    </dependency>
     <dependency>
       <groupId>org.sonatype.aether</groupId>
       <artifactId>aether-api</artifactId>

@@ -15,16 +15,15 @@
  */
 package dropship;
 
-import com.google.common.collect.Iterables;
-import dagger.ObjectGraph;
 import dropship.logging.Logger;
+import dropship.logging.LoggingModule;
 
-import javax.inject.Inject;
 import java.lang.reflect.Method;
 import java.net.URLClassLoader;
+import java.util.List;
 import java.util.Properties;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static dropship.Preconditions.checkNotNull;
 
 /**
  * Dropship main class. This class contains the entry point when dropship is
@@ -39,7 +38,20 @@ public final class Dropship {
    * or implicit via an alias.
    */
   public static void main(String[] args) throws Exception {
-    Dropship dropship = ObjectGraph.create(new DropshipModule(args)).get(Dropship.class);
+    DropshipModule module = new DropshipModule(args);
+    LoggingModule logging = new LoggingModule();
+    SettingsModule settingsModule = new SettingsModule();
+
+    Logger logger = logging.provideLogger(module.provideDateFormat(), module.provideJvmName(), module.provideLoggerDestination());
+    Settings settings = settingsModule.provideSettings(logger, module.provideArgs());
+    ArtifactResolutionService artifactService = new ArtifactResolutionService(settings, module.provideArtifactResolutionBuilder(settings, logger));
+
+    Dropship dropship = new Dropship(
+      settings,
+      artifactService,
+      logger
+    );
+
     try {
       dropship.run();
     } catch (DropshipRuntimeException e) {
@@ -52,7 +64,6 @@ public final class Dropship {
   private final Logger logger;
   private final ArtifactResolutionService artifactResolutionService;
 
-  @Inject
   Dropship(Settings settings, ArtifactResolutionService artifactResolutionService, Logger logger) {
     this.settings = checkNotNull(settings, "settings");
     this.artifactResolutionService = checkNotNull(artifactResolutionService, "artifact resolution service");
@@ -85,7 +96,8 @@ public final class Dropship {
     Method mainMethod = mainClass.getMethod("main", String[].class);
 
     try {
-      String[] args = Iterables.toArray(settings.commandLineArguments(), String.class);
+      List<String> commandLineArguments = settings.commandLineArguments();
+      String[] args = commandLineArguments.toArray(new String[commandLineArguments.size()]);
       preRun(settings.asProperties(), settings.groupArtifactString(), mainClass, mainMethod, args);
 
       logger.info("Invoking main method of %s", mainClass.getName());
@@ -121,6 +133,7 @@ public final class Dropship {
     }));
   }
 
+  @SuppressWarnings("UnusedParameters")
   private void preRun(Properties properties,
                       String groupArtifactString,
                       Class<?> mainClass,
@@ -130,6 +143,7 @@ public final class Dropship {
     // Here for agents
   }
 
+  @SuppressWarnings("UnusedParameters")
   private void onError(Throwable e) {
 
     // Here for agents

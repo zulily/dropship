@@ -15,23 +15,14 @@
  */
 package dropship;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Strings;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import dagger.Module;
-import dagger.Provides;
 import dropship.logging.Logger;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.not;
+import static dropship.Preconditions.checkNotNull;
 import static dropship.Settings.DownloadModeArguments;
 
-@Module(library = true, complete = false)
 class SettingsModule {
 
   private final static String usage;
@@ -66,23 +57,19 @@ class SettingsModule {
       "java -jar dropship.jar --offline --download=/tmp/dir/ mygroup:myartifact";
   }
 
-  private final class OfflineOptionPresent implements Predicate<String> {
-    @Override
+  private final class OfflineOptionPresent {
     public boolean apply(String input) {
       return "--offline".equals(input);
     }
   }
 
-  private final class IsOption implements Predicate<String> {
-    @Override
+  private final class IsOption {
     public boolean apply(String input) {
-      return Strings.nullToEmpty(input).startsWith("--");
+      return input != null && input.startsWith("--");
     }
   }
 
-  @Provides
-  @Singleton
-  Settings provideSettings(Logger logger, @Named("args") ImmutableList<String> args) {
+  Settings provideSettings(Logger logger, List<String> args) {
     checkNotNull(args, "args");
 
     if (args.size() == 0 || args.contains("--help")) {
@@ -90,16 +77,28 @@ class SettingsModule {
       System.exit(args.size() == 0 ? 1 : 0);
     }
 
-    ImmutableList<String> options = FluentIterable.from(args).filter(new IsOption()).toList();
-    ImmutableList<String> nonOptions = FluentIterable.from(args).filter(not(new IsOption())).toList();
+    List<String> nonOptions = new ArrayList<String>();
+    List<String> options = new ArrayList<String>();
+    boolean offlineMode = false;
+    boolean downloadMode = false;
+    for (String arg : args) {
+      if ("--offlineMode".equals(arg)) {
+        offlineMode = true;
+      }
+      if (arg != null && arg.startsWith("--")) {
+        options.add(arg);
+        if (arg.startsWith("--download=")) {
+          downloadMode = true;
+        }
+      } else {
+        nonOptions.add(arg);
+      }
+    }
 
     if (nonOptions.isEmpty()) {
       System.out.println(usage);
       System.exit(1);
     }
-
-    boolean offlineMode = Iterables.any(options, new OfflineOptionPresent());
-    boolean downloadMode = Iterables.any(options, new DownloadModeArguments.DownloadOptionPresent());
 
     // If the first argument contains a ':', we will assume that Dropship is being used in
     // the original 'group:artifact[:version] classname' mode, rather than 'alias' mode

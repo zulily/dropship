@@ -15,28 +15,25 @@
  */
 package dropship.logging;
 
-import com.google.common.annotations.VisibleForTesting;
-import dagger.Module;
-import dagger.Provides;
-
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 
 /**
- * Dagger module that provides logging.
+ * Dagger-like module that provides logging.
  */
-@Module(library = true, complete = false)
 public class LoggingModule {
 
-  @Provides @VisibleForTesting
-  public TerseLogger provideTerseLogger(SimpleDateFormat format, PrintStream destination) {
+  private TerseLogger provideTerseLogger(SimpleDateFormat format, PrintStream destination) {
     return new TerseLogger(format, destination);
   }
 
-  @Provides
-  Logger provideLogger(TerseLogger terse, VerboseLogger verbose) {
+  private VerboseLogger provideVerboseLogger(SimpleDateFormat format, String jvmName, PrintStream destination) {
+    return new VerboseLogger(format, jvmName, destination);
+  }
+
+  public Logger provideLogger(SimpleDateFormat format, String jvmName, PrintStream destination) {
     return "false".equals(System.getProperty("verbose", "false"))
-      ? terse
-      : verbose;
+      ? provideTerseLogger(format, destination)
+      : provideVerboseLogger(format, jvmName, destination);
   }
 }

@@ -15,29 +15,21 @@
  */
 package dropship;
 
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.io.Resources;
 import dropship.logging.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.jar.Manifest;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Throwables.propagate;
+import static dropship.Preconditions.checkArgument;
+import static dropship.Preconditions.checkNotNull;
 
 /**
  * Exposes settings configured via command-line, environment,
@@ -55,15 +47,7 @@ import static com.google.common.base.Throwables.propagate;
  */
 public abstract class Settings {
 
-  private static final CharMatcher GAV_DELIMITER = CharMatcher.is(':');
-  private static final CharMatcher ALIAS_DELIMITER = CharMatcher.is('/');
-  private static final CharMatcher OPTION_DELIMITER = CharMatcher.is('=');
   private static final String DEFAULT_CONFIG_FILE_NAME = "dropship.properties";
-  private static final Splitter CSV = Splitter.on(',').trimResults().omitEmptyStrings();
-  private static final Joiner GAV_JOINER = Joiner.on(':');
-  private static final Splitter GAV_SPLITTER = Splitter.on(GAV_DELIMITER).trimResults().omitEmptyStrings();
-  private static final Splitter ALIAS_SPLITTER = Splitter.on(ALIAS_DELIMITER).trimResults().omitEmptyStrings().limit(2);
-  private static final Splitter OPTION_SPLITTER = Splitter.on(OPTION_DELIMITER).trimResults().omitEmptyStrings().limit(2);
 
   protected final Logger logger;
   private final boolean offlineMode;
@@ -94,10 +78,19 @@ public abstract class Settings {
    */
   public abstract String mainClassName();
 
-  abstract ImmutableList<String> commandLineArguments();
+  abstract List<String> commandLineArguments();
 
   protected String resolveArtifactFromGroupArtifactId(String request) {
-    ImmutableList<String> tokens = ImmutableList.copyOf(GAV_SPLITTER.split(request));
+    List<String> tokens = new ArrayList<String>();
+    String copy = request;
+    while (copy.contains(":")) {
+      int index = copy.indexOf(':');
+      tokens.add(copy.substring(0, index));
+      copy = copy.substring(index + 1);
+    }
+    if (!copy.isEmpty()) {
+      tokens.add(copy);
+    }
 
     checkArgument(tokens.size() > 1, "Require groupId:artifactId[:version]");
     checkArgument(tokens.size() < 4, "Require groupId:artifactId[:version]");
@@ -106,11 +99,12 @@ public abstract class Settings {
       return request;
     }
 
-    String resolvedArtifactId = loadProperty(request).or("[0,)");
-    return GAV_JOINER.join(tokens.get(0), tokens.get(1), resolvedArtifactId);
+
+    String resolvedArtifactId = loadProperty(request, "[0,)");
+    return tokens.get(0) + ":" + tokens.get(1) + ":" + resolvedArtifactId;
   }
 
-  Optional<String> mavenRepoUrl() {
+  String mavenRepoUrl() {
     return loadProperty("repo.remote-url");
   }
 
@@ -123,11 +117,20 @@ public abstract class Settings {
   }
 
   List<String> additionalClasspathPaths() {
-    Optional<String> additionalClasspathPathsString = loadProperty("dropship.additional-paths");
-    if (additionalClasspathPathsString.isPresent()) {
-      return ImmutableList.copyOf(CSV.split(additionalClasspathPathsString.get()));
+    String additionalClasspathPathsString = loadProperty("dropship.additional-paths");
+    if (additionalClasspathPathsString != null) {
+      List<String> paths = new ArrayList<String>();
+      while (additionalClasspathPathsString.contains(",")) {
+        int index = additionalClasspathPathsString.indexOf(',');
+        paths.add(additionalClasspathPathsString.substring(0, index));
+        additionalClasspathPathsString = additionalClasspathPathsString.substring(index + 1);
+      }
+      if (!additionalClasspathPathsString.isEmpty()) {
+        paths.add(additionalClasspathPathsString);
+      }
+      return paths;
     } else {
-      return ImmutableList.of();
+      return new LinkedList<String>();
     }
   }
 
@@ -146,31 +149,6 @@ public abstract class Settings {
     return "";
   }
 
-  /** Returns the optional hostname of the statsd server to use for basic metrics. */
-  public Optional<String> statsdHost() {
-    return loadProperty("statsd.host");
-  }
-
-  /** Returns the optional port number of the statsd server to use for basic metrics. */
-  public Optional<Integer> statsdPort() {
-    Optional<String> statsdPortString = loadProperty("statsd.port");
-    if (statsdPortString.isPresent()) {
-      return Optional.of(Integer.parseInt(statsdPortString.get()));
-    } else {
-      return Optional.absent();
-    }
-  }
-
-  /** Returns the sample rate to use when sending metrics to statsd. */
-  public double statsdSampleRate() {
-    Optional<String> statsdSampleRateString = loadProperty("statsd.sample-rate");
-    if (statsdSampleRateString.isPresent()) {
-      return Double.parseDouble(statsdSampleRateString.get());
-    } else {
-      return 1D;
-    }
-  }
-
   public final Properties asProperties() {
     Properties properties = new Properties(System.getProperties());
     properties.putAll(loadBootstrapPropertiesUnchecked());
@@ -180,12 +158,16 @@ public abstract class Settings {
   String loadProperty(String name, String defaultValue) {
     checkNotNull(defaultValue);
 
-    return loadProperty(name).or(defaultValue);
+    String value = loadProperty(name);
+    return value != null ? value : defaultValue;
   }
 
-  Optional<String> loadProperty(String name) {
-    return Optional.fromNullable(loadBootstrapPropertiesUnchecked().getProperty(name))
-      .or(Optional.fromNullable(System.getProperty(name)));
+  String loadProperty(String name) {
+    String value = loadBootstrapPropertiesUnchecked().getProperty(name);
+    if (value == null) {
+      value = System.getProperty(name);
+    }
+    return value;
   }
 
   private synchronized Properties loadBootstrapProperties() throws IOException {
@@ -240,16 +222,18 @@ public abstract class Settings {
   private Properties loadBootstrapPropertiesUnchecked() {
     try {
       return loadBootstrapProperties();
+    } catch (RuntimeException e) {
+      throw e;
     } catch (Exception e) {
-      throw propagate(e);
+      throw new RuntimeException(e);
     }
   }
 
   private static Properties loadPackageInformation() {
     Properties versionProperties = new Properties();
-    Optional<Manifest> manifest = loadManifest();
-    if (manifest.isPresent()) {
-      for (Map.Entry<Object, Object> attributeEntry : manifest.get().getMainAttributes().entrySet()) {
+    Manifest manifest = loadManifest();
+    if (manifest != null) {
+      for (Map.Entry<Object, Object> attributeEntry : manifest.getMainAttributes().entrySet()) {
         String manifestEntryKey = attributeEntry.getKey().toString().toLowerCase();
         if (manifestEntryKey.startsWith("X-")) {
           manifestEntryKey = manifestEntryKey.substring(2);
@@ -262,50 +246,49 @@ public abstract class Settings {
     return versionProperties;
   }
 
-  private static Optional<Manifest> loadManifest() {
-    Optional<URL> location = Optional.fromNullable(Resources.getResource(CharMatcher.is('.').replaceFrom(Dropship.class.getName(), '/') + ".class"));
-    if (!location.isPresent()) {
-      return Optional.absent();
+  private static Manifest loadManifest() {
+    String resourceName = Dropship.class.getName().replace('.', '/') + ".class";
+    URL location = Dropship.class.getResource(resourceName);
+    if (location == null) {
+      return null;
     }
 
     try {
-      String classPath = location.get().toString();
+      String classPath = location.toString();
       if (!classPath.startsWith("jar")) {
         // Class not from JAR
-        return Optional.absent();
+        return null;
       }
       String manifestPath = classPath.substring(0, classPath.lastIndexOf("!") + 1) + "/META-INF/MANIFEST.MF";
-      return Optional.of(new Manifest(new URL(manifestPath).openStream()));
+      return new Manifest(new URL(manifestPath).openStream());
     } catch (MalformedURLException e) {
-      return Optional.absent();
+      return null;
     } catch (IOException e) {
-      return Optional.absent();
+      return null;
     }
   }
 
   static final class DownloadModeArguments extends Settings {
 
-    final static class DownloadOptionPresent implements Predicate<String> {
-      @Override
-      public boolean apply(String input) {
-        return Strings.nullToEmpty(input).startsWith("--download=");
-      }
-    }
-
     private final String localDownloadDir;
     private final Settings delegate;
 
     // TODO : scope
-    public DownloadModeArguments(Logger logger, Settings delegate, ImmutableList<String> options) {
+    public DownloadModeArguments(Logger logger, Settings delegate, List<String> options) {
       super(logger, delegate.offlineMode());
 
       // parse --download=/some/local/path
-      List<String> downloadOption = OPTION_SPLITTER.splitToList(Iterables.tryFind(options, new DownloadOptionPresent()).or(""));
+      String path = null;
+      for (String option : options) {
+        if (option.startsWith("--download=")) {
+          path = option.substring("--download=".length());
+        }
+      }
       checkArgument(
-        downloadOption.size() == 2 && !Strings.isNullOrEmpty(downloadOption.get(1)),
+        path != null && !path.isEmpty(),
         "Must specify a local download directory"
       );
-      this.localDownloadDir = downloadOption.get(1);
+      this.localDownloadDir = path;
       this.delegate = checkNotNull(delegate, "delegate");
     }
 
@@ -325,13 +308,13 @@ public abstract class Settings {
     }
 
     @Override
-    ImmutableList<String> commandLineArguments() {
+    List<String> commandLineArguments() {
       return delegate.commandLineArguments();
     }
 
     @Override
     public boolean downloadMode() {
-      return !Strings.isNullOrEmpty(this.localDownloadDir);
+      return this.localDownloadDir != null && !this.localDownloadDir.isEmpty();
     }
 
     @Override
@@ -344,20 +327,20 @@ public abstract class Settings {
 
     private final String requestedArtifact;
     private final String mainClassName;
-    private final Iterable<String> args;
+    private final List<String> args;
 
     // TODO : scope
-    public ExplicitArtifactArguments(Logger logger, ImmutableList<String> args, boolean offline, boolean download) {
+    public ExplicitArtifactArguments(Logger logger, List<String> args, boolean offline, boolean download) {
       super(logger, offline);
       checkArgument(!args.isEmpty(), "Must specify groupId:artifactId[:version]");
       this.requestedArtifact = args.get(0);
       if (download) {
         this.mainClassName = "";
-        this.args = ImmutableList.of();
+        this.args = new LinkedList<String>();
       } else {
         checkArgument(args.size() >= 2, "Must specify groupId:artifactId[:version] and a main class name!");
         this.mainClassName = args.get(1);
-        this.args = Iterables.skip(args, 2);
+        this.args = args.subList(2, args.size());
       }
     }
 
@@ -377,22 +360,22 @@ public abstract class Settings {
     }
 
     @Override
-    ImmutableList<String> commandLineArguments() {
-      return ImmutableList.copyOf(args);
+    List<String> commandLineArguments() {
+      return new ArrayList<String>(args);
     }
   }
 
   static final class AliasArguments extends Settings {
 
     private final String alias;
-    private final Iterable<String> args;
+    private final List<String> args;
 
     // TODO : scope
-    public AliasArguments(Logger logger, ImmutableList<String> args, boolean offline) {
+    public AliasArguments(Logger logger, List<String> args, boolean offline) {
       super(logger, offline);
       checkArgument(args.size() >= 1);
       this.alias = args.get(0);
-      this.args = Iterables.skip(args, 1);
+      this.args = args.subList(1, args.size());
     }
 
     @Override
@@ -404,10 +387,12 @@ public abstract class Settings {
     String resolveArtifact(String request) {
 
       String aliasPropertyName = "alias." + request;
-      Optional<String> resolvedAlias = loadProperty(aliasPropertyName);
+      String resolvedAlias = loadProperty(aliasPropertyName);
 
-      if (resolvedAlias.isPresent()) {
-        return resolveArtifactFromGroupArtifactId(ALIAS_SPLITTER.splitToList(resolvedAlias.get()).get(0));
+      if (resolvedAlias != null && resolvedAlias.contains("/")) {
+        // Split alias on '/', first token is the group and artifact id
+        String groupAndArtifactId = resolvedAlias.substring(0, resolvedAlias.indexOf('/'));
+        return resolveArtifactFromGroupArtifactId(groupAndArtifactId);
       } else {
         throw new RuntimeException("Could not resolve alias \"" + request + "\" to artifact ID. Make sure \"alias." + request + "\" is configured in dropship properties.");
       }
@@ -417,18 +402,19 @@ public abstract class Settings {
     public String mainClassName() {
 
       String aliasPropertyName = "alias." + alias;
-      Optional<String> resolvedAlias = loadProperty(aliasPropertyName);
+      String resolvedAlias = loadProperty(aliasPropertyName);
 
-      if (resolvedAlias.isPresent()) {
-        return ALIAS_SPLITTER.splitToList(resolvedAlias.get()).get(1);
+      if (resolvedAlias != null && resolvedAlias.contains("/")) {
+        // Everything after first '/' is the class name
+        return resolvedAlias.substring(resolvedAlias.indexOf('/') + 1);
       } else {
         throw new RuntimeException("Could not resolve alias \"" + alias + "\" to main class name. Make sure \"alias." + alias + "\" is configured in dropship.properties.");
       }
     }
 
     @Override
-    ImmutableList<String> commandLineArguments() {
-      return ImmutableList.copyOf(args);
+    List<String> commandLineArguments() {
+      return new ArrayList<String>(args);
     }
   }
 
