@@ -26,6 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Scanner;
 import java.util.jar.Manifest;
 
 import static dropship.Preconditions.checkArgument;
@@ -82,14 +83,9 @@ public abstract class Settings {
 
   protected String resolveArtifactFromGroupArtifactId(String request) {
     List<String> tokens = new ArrayList<String>();
-    String copy = request;
-    while (copy.contains(":")) {
-      int index = copy.indexOf(':');
-      tokens.add(copy.substring(0, index));
-      copy = copy.substring(index + 1);
-    }
-    if (!copy.isEmpty()) {
-      tokens.add(copy);
+    Scanner tokenizer = new Scanner(request).useDelimiter(":");
+    while (tokenizer.hasNext()) {
+      tokens.add(tokenizer.next());
     }
 
     checkArgument(tokens.size() > 1, "Require groupId:artifactId[:version]");
@@ -120,13 +116,9 @@ public abstract class Settings {
     String additionalClasspathPathsString = loadProperty("dropship.additional-paths");
     if (additionalClasspathPathsString != null) {
       List<String> paths = new ArrayList<String>();
-      while (additionalClasspathPathsString.contains(",")) {
-        int index = additionalClasspathPathsString.indexOf(',');
-        paths.add(additionalClasspathPathsString.substring(0, index));
-        additionalClasspathPathsString = additionalClasspathPathsString.substring(index + 1);
-      }
-      if (!additionalClasspathPathsString.isEmpty()) {
-        paths.add(additionalClasspathPathsString);
+      Scanner tokenizer = new Scanner(additionalClasspathPathsString).useDelimiter(",");
+      while (tokenizer.hasNext()) {
+        paths.add(tokenizer.next());
       }
       return paths;
     } else {
