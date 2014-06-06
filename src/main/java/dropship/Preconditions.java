@@ -10,17 +10,17 @@ public class Preconditions {
     }
   }
 
-  public static <T> T checkNotNull(T obj, String msg, Object... args) {
+  public static <T> T checkNotNull(T obj, String msg) {
     if (obj == null) {
-      throw new NullPointerException(String.format(msg, args));
+      throw new NullPointerException(msg);
     } else {
       return obj;
     }
   }
 
-  public static void checkState(boolean state, String msg, Object... args) {
+  public static void checkState(boolean state, String msg) {
     if (!state) {
-      throw new IllegalStateException(String.format(msg, args));
+      throw new IllegalStateException(msg);
     }
   }
 
@@ -30,9 +30,9 @@ public class Preconditions {
     }
   }
 
-  public static void checkArgument(boolean condition, String msg, Object... args) {
+  public static void checkArgument(boolean condition, String msg) {
     if (!condition) {
-      throw new IllegalStateException(String.format(msg, args));
+      throw new IllegalStateException(msg);
     }
   }
 }
