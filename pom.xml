@@ -223,6 +223,20 @@
                   </manifestEntries>
                 </transformer>
               </transformers>
+	      <relocations>
+	        <relocation>
+                  <pattern>org</pattern>
+                  <shadedPattern>dropship.repackaged.org</shadedPattern>
+                </relocation>
+	        <relocation>
+                  <pattern>javax</pattern>
+                  <shadedPattern>dropship.repackaged.javax</shadedPattern>
+                </relocation>
+	        <relocation>
+                  <pattern>com.google</pattern>
+                  <shadedPattern>dropship.repackaged.com.google</shadedPattern>
+                </relocation>
+              </relocations>
             </configuration>
           </execution>
         </executions>
