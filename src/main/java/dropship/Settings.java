@@ -142,8 +142,9 @@ public abstract class Settings {
   }
 
   public final Properties asProperties() {
-    Properties properties = new Properties(System.getProperties());
+    Properties properties = new Properties();
     properties.putAll(loadBootstrapPropertiesUnchecked());
+    properties.putAll(System.getProperties());
     return properties;
   }
 
@@ -155,9 +156,9 @@ public abstract class Settings {
   }
 
   String loadProperty(String name) {
-    String value = loadBootstrapPropertiesUnchecked().getProperty(name);
+    String value = System.getProperty(name);
     if (value == null) {
-      value = System.getProperty(name);
+      value = loadBootstrapPropertiesUnchecked().getProperty(name);
     }
     return value;
   }
