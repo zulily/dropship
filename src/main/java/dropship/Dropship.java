@@ -18,6 +18,7 @@ package dropship;
 import dropship.logging.Logger;
 import dropship.logging.LoggingModule;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URLClassLoader;
 import java.util.List;
@@ -103,8 +104,17 @@ public final class Dropship {
       logger.info("Invoking main method of %s", mainClass.getName());
       System.setProperty("dropship.running", "true");
       mainMethod.invoke(null, (Object) args);
+    } catch (InvocationTargetException e) {
+      Throwable cause = e.getCause();
+      onError(cause);
+      if (cause instanceof RuntimeException) {
+        throw (RuntimeException) cause;
+      } else {
+        throw new RuntimeException(cause);
+      }
     } catch (Exception e) {
       onError(e);
+      throw e;
     }
   }
 
