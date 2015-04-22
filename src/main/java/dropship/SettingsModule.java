@@ -70,7 +70,7 @@ class SettingsModule {
     boolean offlineMode = false;
     boolean downloadMode = false;
     for (String arg : args) {
-      if ("--offlineMode".equals(arg)) {
+      if ("--offline".equals(arg)) {
         offlineMode = true;
       }
       if (arg != null && arg.startsWith("--")) {
