@@ -29,6 +29,7 @@ import org.sonatype.aether.graph.Dependency;
 import org.sonatype.aether.graph.DependencyFilter;
 import org.sonatype.aether.graph.DependencyNode;
 import org.sonatype.aether.repository.LocalRepository;
+import org.sonatype.aether.repository.LocalRepositoryManager;
 import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.repository.RepositoryPolicy;
 import org.sonatype.aether.resolution.ArtifactResolutionException;
@@ -36,6 +37,7 @@ import org.sonatype.aether.resolution.DependencyRequest;
 import org.sonatype.aether.resolution.DependencyResolutionException;
 import org.sonatype.aether.resolution.VersionRangeResolutionException;
 import org.sonatype.aether.transfer.ArtifactNotFoundException;
+import org.sonatype.aether.util.DefaultRepositorySystemSession;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.filter.ScopeDependencyFilter;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
@@ -250,9 +252,19 @@ final class MavenArtifactResolution {
     }
 
     private RepositorySystemSession newSession(RepositorySystem system) {
-      MavenRepositorySystemSession session = new MavenRepositorySystemSession();
+      LocalRepository localRepo = new LocalRepository(localRepositoryDirectory);
+      LocalRepositoryManager localRepositoryManager = system.newLocalRepositoryManager(localRepo);
 
-      session.setOffline(settings.offlineMode());
+      if (settings.offlineMode()) {
+        DefaultRepositorySystemSession session = new DefaultRepositorySystemSession();
+        session.setOffline(true);
+        session.setSystemProps(System.getProperties());
+        session.setLocalRepositoryManager(localRepositoryManager);
+        return session;
+      }
+
+      MavenRepositorySystemSession session = new MavenRepositorySystemSession();
+      session.setOffline(false);
       session.setRepositoryListener(logger.listener());
       session.setChecksumPolicy(RepositoryPolicy.CHECKSUM_POLICY_FAIL);
       session.setIgnoreInvalidArtifactDescriptor(false);
@@ -260,10 +272,8 @@ final class MavenArtifactResolution {
       session.setNotFoundCachingEnabled(false);
       session.setTransferErrorCachingEnabled(false);
       session.setUpdatePolicy(RepositoryPolicy.UPDATE_POLICY_ALWAYS);
-
-      LocalRepository localRepo = new LocalRepository(localRepositoryDirectory);
-      session.setLocalRepositoryManager(system.newLocalRepositoryManager(localRepo));
-
+      session.setSystemProps(System.getProperties());
+      session.setLocalRepositoryManager(localRepositoryManager);
       return session;
     }
   }
