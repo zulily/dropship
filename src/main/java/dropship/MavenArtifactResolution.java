@@ -51,7 +51,10 @@ import java.net.URLClassLoader;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 import static dropship.Preconditions.checkArgument;
 import static dropship.Preconditions.checkNotNull;
@@ -255,10 +258,12 @@ final class MavenArtifactResolution {
       LocalRepository localRepo = new LocalRepository(localRepositoryDirectory);
       LocalRepositoryManager localRepositoryManager = system.newLocalRepositoryManager(localRepo);
 
+      Map<String, String> systemProps = assembleSystemProps();
+
       if (settings.offlineMode()) {
         DefaultRepositorySystemSession session = new DefaultRepositorySystemSession();
         session.setOffline(true);
-        session.setSystemProps(System.getProperties());
+        session.setSystemProperties(systemProps);
         session.setLocalRepositoryManager(localRepositoryManager);
         return session;
       }
@@ -272,10 +277,23 @@ final class MavenArtifactResolution {
       session.setNotFoundCachingEnabled(false);
       session.setTransferErrorCachingEnabled(false);
       session.setUpdatePolicy(RepositoryPolicy.UPDATE_POLICY_ALWAYS);
-      session.setSystemProps(System.getProperties());
+      session.setSystemProperties(systemProps);
       session.setLocalRepositoryManager(localRepositoryManager);
       return session;
     }
+  }
+
+  private static Map<String, String> assembleSystemProps() {
+    Map<String, String> props = new HashMap<String, String>();
+    Properties properties = System.getProperties();
+    for (String key : properties.stringPropertyNames()) {
+      props.put(key, properties.getProperty(key));
+    }
+    Map<String, String> env = System.getenv();
+    for (Map.Entry<String, String> entry : env.entrySet()) {
+      props.put("env." + entry.getKey(), entry.getValue());
+    }
+    return props;
   }
 
   /**
