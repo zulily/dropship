@@ -42,6 +42,12 @@ import org.sonatype.aether.util.artifact.DefaultArtifact;
 import org.sonatype.aether.util.filter.ScopeDependencyFilter;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -49,6 +55,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.channels.FileChannel;
+import java.security.GeneralSecurityException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -251,6 +259,38 @@ final class MavenArtifactResolution {
     }
 
     private RepositorySystem newRepositorySystem() throws PlexusContainerException, ComponentLookupException {
+      if (settings.insecure()) {
+        logger.warn("Disabling strict SSL certificate checking!");
+
+        // Create a trust manager that does not validate certificate chains
+        TrustManager[] trustAllCerts = new TrustManager[]{
+          new X509TrustManager() {
+            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+              return new X509Certificate[0];
+            }
+
+            public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+
+            public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+          }
+        };
+
+        try {
+          SSLContext sc = SSLContext.getInstance("SSL");
+          sc.init(null, trustAllCerts, new java.security.SecureRandom());
+          HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+          HttpsURLConnection.setDefaultHostnameVerifier(
+            new HostnameVerifier() {
+              public boolean verify(String hostname, SSLSession session) {
+                return true;
+              }
+            }
+          );
+        } catch (GeneralSecurityException e) {
+          e.printStackTrace();
+        }
+      }
+
       return new DefaultPlexusContainer().lookup(RepositorySystem.class);
     }
 

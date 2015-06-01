@@ -126,6 +126,11 @@ public abstract class Settings {
     }
   }
 
+  /** Returns true if dropship should ignore bad ssl certs. */
+  public boolean insecure() {
+    return "true".equalsIgnoreCase(loadProperty("dropship.insecure", "false"));
+  }
+
   /** Returns true if dropship should run in offline mode. */
   public boolean offlineMode() {
     return this.offlineMode || "true".equalsIgnoreCase(loadProperty("dropship.offline", "false"));
